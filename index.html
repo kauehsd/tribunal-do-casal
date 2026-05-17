@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tribunal do Casal ⚖️</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0c10;
+  --surface: #12141a;
+  --surface2: #1a1d26;
+  --surface3: #212532;
+  --border: #252836;
+  --border2: #2e3245;
+  --gold: #d4a843;
+  --gold2: #f0c96b;
+  --gold-dim: rgba(212,168,67,0.09);
+  --red: #e05252;
+  --red-dim: rgba(224,82,82,0.08);
+  --red-mid: rgba(224,82,82,0.16);
+  --blue: #4a90d9;
+  --blue-dim: rgba(74,144,217,0.08);
+  --blue-mid: rgba(74,144,217,0.16);
+  --green: #52b788;
+  --green-dim: rgba(82,183,136,0.08);
+  --purple: #9b72cf;
+  --purple-dim: rgba(155,114,207,0.08);
+  --amber: #e8a020;
+  --text: #e8e4da;
+  --text2: #a09890;
+  --text3: #55514c;
+  --mono: 'DM Mono', monospace;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; opacity: 0.4; }
+
+/* ══ SCREENS ══ */
+.screen { display: none; position: relative; z-index: 1; }
+.screen.active { display: block; }
+#screen-home.active { display: flex; }
+
+/* ══ HOME ══ */
+#screen-home { min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px calc(40px + var(--safe-bottom)); text-align: center; }
+.home-deco { width: 1px; height: 60px; background: linear-gradient(to bottom, transparent, var(--gold)); margin: 0 auto 28px; }
+.home-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 16px; border: 1px solid var(--border2); border-radius: 100px; font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 20px; }
+.home-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(42px, 9vw, 78px); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 12px; }
+.home-title em { font-style: italic; color: var(--gold); }
+.home-sub { color: var(--text2); font-size: 15px; font-weight: 300; margin-bottom: 40px; }
+
+.case-picker { width: 100%; max-width: 580px; margin-bottom: 32px; }
+.case-picker-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.case-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+@media(max-width:480px){ .case-grid { grid-template-columns: repeat(2, 1fr); } }
+.case-btn { padding: 14px 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-family: 'Outfit', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.18s; text-align: center; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.case-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+.case-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.case-btn-num { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.case-btn.active .case-btn-num { color: var(--gold); opacity: 0.6; }
+.case-btn-name { font-size: 11px; font-weight: 400; line-height: 1.3; }
+.random-pill { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 100px; border: 1px solid var(--border); background: none; color: var(--text3); font-family: var(--mono); font-size: 10px; cursor: pointer; transition: all 0.18s; letter-spacing: 0.06em; margin-top: 6px; }
+.random-pill:hover { border-color: var(--gold); color: var(--gold); }
+
+.role-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 640px; }
+@media(max-width:580px){ .role-row { grid-template-columns: 1fr; } }
+.role-card { border-radius: 14px; border: 1px solid var(--border); padding: 22px 18px; cursor: pointer; transition: all 0.22s; text-align: left; background: var(--surface); position: relative; overflow: hidden; min-height: 120px; }
+.role-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.22s; }
+.role-card.acusacao::before { background: radial-gradient(circle at 20% 80%, rgba(224,82,82,0.12) 0%, transparent 70%); }
+.role-card.defesa::before { background: radial-gradient(circle at 80% 80%, rgba(74,144,217,0.12) 0%, transparent 70%); }
+.role-card.juiz::before { background: radial-gradient(circle at 50% 80%, rgba(212,168,67,0.12) 0%, transparent 70%); }
+.role-card:hover::before { opacity: 1; }
+.role-card.acusacao:hover { border-color: var(--red); transform: translateY(-2px); }
+.role-card.defesa:hover { border-color: var(--blue); transform: translateY(-2px); }
+.role-card.juiz:hover { border-color: var(--gold); transform: translateY(-2px); }
+.role-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+.role-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+.role-card.acusacao .role-name { color: var(--red); }
+.role-card.defesa .role-name { color: var(--blue); }
+.role-card.juiz .role-name { color: var(--gold); }
+.role-desc { font-size: 11.5px; color: var(--text3); line-height: 1.5; font-weight: 300; }
+.role-arrow { position: absolute; right: 14px; bottom: 14px; font-size: 16px; color: var(--border2); transition: all 0.2s; }
+.role-card:hover .role-arrow { color: var(--text2); transform: translateX(3px); }
+
+/* ══ TOPBAR ══ */
+.game-topbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; padding-top: calc(10px + var(--safe-top)); border-bottom: 1px solid var(--border); background: rgba(11,12,16,0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+.topbar-back { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text3); font-family: var(--mono); font-size: 10px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; min-height: 36px; min-width: 36px; flex-shrink: 0; }
+.topbar-back:hover { border-color: var(--border2); color: var(--text2); }
+.topbar-case { font-family: var(--mono); font-size: 10px; color: var(--text3); white-space: nowrap; display: none; }
+@media(min-width:500px){ .topbar-case { display: block; } }
+.topbar-sep { color: var(--border2); display: none; }
+@media(min-width:500px){ .topbar-sep { display: block; } }
+.topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-role { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 100px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; }
+.topbar-role.acusacao { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,82,82,0.25); }
+.topbar-role.defesa { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,144,217,0.25); }
+.topbar-role.juiz { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(212,168,67,0.25); }
+
+/* ══ TAB BAR ══ */
+.tab-bar { display: flex; background: rgba(11,12,16,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; position: sticky; top: 55px; z-index: 99; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn { padding: 10px 16px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; color: var(--text3); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; min-height: 44px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn .tab-icon { font-size: 14px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeUp 0.22s ease; }
+
+/* ══ GAME BODY ══ */
+.game-body { max-width: 880px; margin: 0 auto; padding: 20px 16px calc(40px + var(--safe-bottom)); }
+
+/* ══ BRIEF ══ */
+.brief-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 14px; position: relative; overflow: hidden; animation: fadeUp 0.3s ease; }
+.brief-card::after { content: '⚖'; position: absolute; right: 12px; bottom: -14px; font-size: 110px; color: rgba(212,168,67,0.035); pointer-events: none; }
+.brief-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tag { padding: 3px 10px; border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: 1px solid; }
+.tag-gold { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.07); }
+.tag-red { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.tag-blue { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+.tag-green { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.tag-purple { border-color: var(--purple); color: var(--purple); background: var(--purple-dim); }
+.brief-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(19px, 3.5vw, 26px); font-weight: 700; margin-bottom: 12px; }
+.brief-body { font-size: 14px; line-height: 1.78; color: var(--text2); font-weight: 300; }
+.brief-body strong { color: var(--text); font-weight: 500; }
+
+/* ══ ARG CARDS ══ */
+.args-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+@media(max-width:560px){ .args-grid { grid-template-columns: 1fr; } }
+.arg-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; text-align: left; min-height: 60px; }
+.arg-card.fav { border-left: 2px solid rgba(82,183,136,0.4); }
+.arg-card.contra { border-left: 2px solid rgba(224,82,82,0.4); }
+.arg-card:hover { border-color: var(--border2); background: var(--surface2); }
+.arg-card.checked { border-color: var(--green) !important; background: var(--green-dim); }
+.arg-card.checked .arg-check { opacity: 1; }
+.arg-check { position: absolute; top: 10px; right: 10px; font-size: 13px; opacity: 0; transition: opacity 0.15s; }
+.arg-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+.arg-label.fav { color: var(--green); }
+.arg-label.contra { color: var(--red); }
+.arg-text { font-size: 12.5px; color: var(--text2); line-height: 1.5; font-weight: 300; padding-right: 20px; }
+.args-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.args-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+.args-counter { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* ══ VADE ══ */
+.vade-wrap { margin-bottom: 14px; }
+.vade-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-radius: 10px; cursor: pointer; transition: all 0.15s; border: 1px solid; min-height: 52px; }
+.vade-header.open { border-radius: 10px 10px 0 0; }
+.vade-header:hover { filter: brightness(1.12); }
+.vade-header.acusacao-h { background: var(--red-dim); border-color: rgba(224,82,82,0.2); }
+.vade-header.defesa-h { background: var(--blue-dim); border-color: rgba(74,144,217,0.2); }
+.vade-header.juiz-h { background: var(--gold-dim); border-color: rgba(212,168,67,0.2); }
+.vade-header-left { display: flex; align-items: center; gap: 10px; }
+.vade-hicon { font-size: 18px; }
+.vade-htitle { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; }
+.vade-header.acusacao-h .vade-htitle { color: var(--red); }
+.vade-header.defesa-h .vade-htitle { color: var(--blue); }
+.vade-header.juiz-h .vade-htitle { color: var(--gold); }
+.vade-hsub { font-family: var(--mono); font-size: 9.5px; color: var(--text3); letter-spacing: 0.07em; }
+.vade-toggle { font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+.vade-arr { transition: transform 0.22s; display: inline-block; }
+.vade-arr.open { transform: rotate(180deg); }
+.vade-body { display: none; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; }
+.vade-body.open { display: block; }
+.vade-tabs { display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); }
+.vade-tabs::-webkit-scrollbar { display: none; }
+.vade-tab { padding: 10px 14px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text3); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; min-height: 44px; }
+.vade-tab:hover { color: var(--text2); }
+.vade-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.vade-panel { display: none; padding: 18px; }
+.vade-panel.active { display: block; }
+.vade-art-id { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.07em; margin-bottom: 3px; }
+.vade-art-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+.vade-art-fonte { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 12px; }
+.vade-pena { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 5px; background: rgba(212,168,67,0.07); border: 1px solid rgba(212,168,67,0.22); font-family: var(--mono); font-size: 10px; color: var(--gold2); margin-bottom: 12px; }
+.vade-texto { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: 7px; padding: 12px 14px; font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.78; color: var(--text2); font-style: italic; margin-bottom: 12px; }
+.vade-texto strong { color: var(--text); font-style: normal; font-weight: 600; }
+.vade-exp { font-size: 13px; line-height: 1.7; color: var(--text2); font-weight: 300; margin-bottom: 12px; }
+.vade-exp strong { color: var(--text); font-weight: 500; }
+.vade-pars-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+.vade-par { display: flex; gap: 9px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: rgba(255,255,255,0.012); margin-bottom: 5px; font-size: 12.5px; color: var(--text2); line-height: 1.5; font-weight: 300; }
+.vade-par:last-child { margin-bottom: 12px; }
+.vade-par-n { font-family: var(--mono); font-size: 10px; color: var(--gold); flex-shrink: 0; min-width: 44px; padding-top: 1px; }
+.vade-juris-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; }
+.vade-juris-item { background: var(--purple-dim); border: 1px solid rgba(155,114,207,0.15); border-radius: 6px; padding: 9px 12px; margin-bottom: 5px; font-size: 12.5px; color: var(--text2); font-style: italic; font-family: 'Cormorant Garamond', serif; line-height: 1.55; }
+.vade-juris-ref { font-family: var(--mono); font-size: 9px; color: var(--purple); font-style: normal; display: block; margin-top: 3px; }
+.vade-dica { background: rgba(232,160,32,0.07); border: 1px solid rgba(232,160,32,0.18); border-radius: 7px; padding: 10px 13px; font-size: 12.5px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
+.vade-dica-t { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin-bottom: 4px; }
+
+/* ══ GUIA ══ */
+.section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 14px; }
+@media(max-width:560px){ .guide-grid { grid-template-columns: 1fr; } }
+.guide-item { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 12px 13px 12px 34px; font-size: 12.5px; color: var(--text2); line-height: 1.55; font-weight: 300; position: relative; }
+.guide-item::before { content: attr(data-n); position: absolute; left: 11px; top: 12px; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; line-height: 1; }
+.acusacao-guide .guide-item::before { color: var(--red); }
+.defesa-guide .guide-item::before { color: var(--blue); }
+
+/* ══ NOTEPAD MELHORADO ══ */
+.notepad-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+.notepad-topbar { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; }
+.notepad-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); flex: 1; }
+.notepad-save-badge { font-family: var(--mono); font-size: 9px; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+.notepad-save-badge.show { opacity: 1; }
+.notepad-tpl-row { display: flex; gap: 5px; padding: 10px 14px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.notepad-tpl-row::-webkit-scrollbar { display: none; }
+.notepad-tpl { padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border); background: none; color: var(--text3); font-family: var(--mono); font-size: 9px; cursor: pointer; transition: all 0.15s; white-space: nowrap; min-height: 30px; }
+.notepad-tpl:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.notepad-cat-row { display: flex; gap: 5px; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.notepad-cat { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: none; font-family: var(--mono); font-size: 9px; cursor: pointer; transition: all 0.15s; min-height: 30px; }
+.notepad-cat:hover { border-color: var(--border2); }
+.notepad-cat.active-acu { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.notepad-cat.active-def { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+.notepad-cat.active-jui { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.notepad-cat.inactive { color: var(--text3); }
+.notepad-inner { position: relative; }
+.notepad-inner textarea { width: 100%; min-height: 180px; background: transparent; border: none; padding: 14px 14px 40px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; line-height: 1.65; font-weight: 300; resize: vertical; outline: none; caret-color: var(--gold); }
+.notepad-inner textarea::placeholder { color: var(--text3); font-style: italic; }
+.notepad-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--surface2); }
+.notepad-hint { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.05em; }
+.notepad-count { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.notepad-clear { font-family: var(--mono); font-size: 9px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.15s; }
+.notepad-clear:hover { color: var(--red); }
+
+/* ══ INSTÂNCIAS ══ */
+.inst-section { margin-bottom: 14px; }
+.inst-tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.inst-tabs::-webkit-scrollbar { display: none; }
+.inst-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.18s; white-space: nowrap; min-height: 40px; }
+.inst-tab:hover { border-color: var(--border2); color: var(--text); }
+.inst-tab.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.inst-panel { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.inst-panel.active { display: block; animation: fadeUp 0.2s ease; }
+.inst-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.inst-badge { padding: 3px 11px; border-radius: 5px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; font-weight: 500; }
+.ib-cond { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,82,82,0.25); }
+.ib-absol { background: var(--green-dim); color: var(--green); border: 1px solid rgba(82,183,136,0.25); }
+.ib-mant { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,144,217,0.25); }
+.ib-redu { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(155,114,207,0.25); }
+.inst-trib { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.05em; }
+.inst-pena { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--gold); }
+.inst-texto { font-size: 13px; line-height: 1.7; color: var(--text2); font-weight: 300; margin-bottom: 9px; }
+.inst-ratio { padding-top: 9px; border-top: 1px solid var(--border); font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--text3); font-style: italic; line-height: 1.6; }
+
+/* ══ PONTOS ══ */
+.hot-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+.hot-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
+.hot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+@media(max-width:560px){ .hot-grid { grid-template-columns: 1fr; } }
+.hot-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px 10px 30px; font-size: 12.5px; color: var(--text2); line-height: 1.5; font-weight: 300; position: relative; }
+.hot-item::before { content: '?'; position: absolute; left: 10px; top: 10px; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: var(--gold); line-height: 1; }
+
+/* ══ JUIZ — CALCULADORA ══ */
+.calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 14px; }
+.calc-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.calc-icon { font-size: 28px; flex-shrink: 0; }
+.calc-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; margin-bottom: 3px; }
+.calc-subtitle { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.07em; }
+.pena-result-bar { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+@media(max-width:500px){ .pena-result-bar { flex-direction: column; text-align: center; } }
+.pena-years-display { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 700; color: var(--gold); line-height: 1; white-space: nowrap; }
+.pena-years-display span { font-size: 20px; color: var(--text3); font-family: var(--mono); font-weight: 300; }
+.pena-result-info { flex: 1; }
+.pena-regime { font-family: var(--mono); font-size: 11px; color: var(--green); letter-spacing: 0.06em; margin-bottom: 5px; }
+.pena-breakdown { font-size: 12.5px; color: var(--text2); line-height: 1.6; font-weight: 300; }
+.slider-group { margin-bottom: 20px; }
+.slider-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.slider-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+.slider-value { font-family: var(--mono); font-size: 11px; color: var(--gold); font-weight: 500; }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border2); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--gold); cursor: pointer; transition: transform 0.15s; }
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--gold); cursor: pointer; border: none; }
+.check-group { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 20px; }
+@media(max-width:560px){ .check-group { grid-template-columns: 1fr; } }
+.check-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.18s; min-height: 50px; }
+.check-item:hover { border-color: var(--border2); }
+.check-item.active-agg { border-color: rgba(224,82,82,0.4); background: var(--red-dim); }
+.check-item.active-ate { border-color: rgba(82,183,136,0.4); background: var(--green-dim); }
+.check-box { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
+.check-item.active-agg .check-box { background: var(--red); border-color: var(--red); color: white; }
+.check-item.active-ate .check-box { background: var(--green); border-color: var(--green); color: white; }
+.check-label-wrap { flex: 1; }
+.check-label { font-size: 12.5px; color: var(--text2); line-height: 1.4; font-weight: 300; }
+.check-effect { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; letter-spacing: 0.05em; }
+.check-item.active-agg .check-effect { color: var(--red); }
+.check-item.active-ate .check-effect { color: var(--green); }
+.calc-divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+/* ══ JUIZ — PONTOS ══ */
+.hot-juiz-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 13px 14px; margin-bottom: 8px; }
+.hot-juiz-q { font-size: 13px; color: var(--text2); line-height: 1.55; font-weight: 300; margin-bottom: 10px; }
+.hot-juiz-positions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hjp-btn { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: none; font-size: 11px; color: var(--text3); cursor: pointer; transition: all 0.15s; text-align: left; min-height: 40px; }
+.hjp-btn.acu:hover, .hjp-btn.acu.sel { border-color: rgba(224,82,82,0.4); background: var(--red-dim); color: var(--red); }
+.hjp-btn.def:hover, .hjp-btn.def.sel { border-color: rgba(74,144,217,0.4); background: var(--blue-dim); color: var(--blue); }
+
+/* ══ PLACAR ══ */
+.placar-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+.placar-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+.placar-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.placar-side { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 13px; text-align: center; }
+.placar-side-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+.placar-side.acu .placar-side-label { color: var(--red); }
+.placar-side.def .placar-side-label { color: var(--blue); }
+.placar-score { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.placar-side.acu .placar-score { color: var(--red); }
+.placar-side.def .placar-score { color: var(--blue); }
+.placar-pts { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.placar-vs { display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--text3); font-style: italic; padding: 0 4px; flex-shrink: 0; }
+.placar-btn-row { display: flex; gap: 6px; }
+.placar-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: none; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; min-height: 44px; }
+.placar-btn.acu { color: var(--red); border-color: rgba(224,82,82,0.3); }
+.placar-btn.def { color: var(--blue); border-color: rgba(74,144,217,0.3); }
+.placar-btn.acu:hover { background: var(--red-dim); }
+.placar-btn.def:hover { background: var(--blue-dim); }
+.placar-btn.reset-btn { color: var(--text3); max-width: 60px; flex: 0 0 60px; }
+.placar-btn.reset-btn:hover { color: var(--text2); }
+
+/* ══ VEREDITO ══ */
+.verdict-locked-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 14px; position: relative; overflow: hidden; }
+.verdict-locked-card::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.008) 10px, rgba(255,255,255,0.008) 20px); pointer-events: none; }
+.verdict-lock-center { text-align: center; padding: 20px 0; }
+.lock-icon { font-size: 48px; margin-bottom: 14px; display: block; filter: grayscale(0.3); }
+.lock-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; margin-bottom: 8px; color: var(--gold); }
+.lock-sub { font-size: 14px; color: var(--text3); font-weight: 300; line-height: 1.6; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto; }
+.lock-btn { display: inline-flex; align-items: center; gap: 9px; padding: 14px 28px; border-radius: 10px; border: 1px solid var(--gold); background: var(--gold-dim); color: var(--gold); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; min-height: 48px; }
+.lock-btn:hover { background: rgba(212,168,67,0.16); transform: translateY(-1px); box-shadow: 0 0 24px rgba(212,168,67,0.12); }
+.verdict-revealed { animation: unveil 0.5s ease; }
+@keyframes unveil { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+.verdict-card { background: var(--surface); border: 1px solid rgba(212,168,67,0.3); border-radius: 14px; padding: 26px; margin-bottom: 14px; }
+.verdict-stamp { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.verdict-stamp-icon { font-size: 36px; }
+.verdict-stamp-text { flex: 1; }
+.verdict-stamp-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 3px; }
+.verdict-stamp-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; }
+.verdict-stamp-name.condenado { color: var(--red); }
+.verdict-stamp-name.absolvido { color: var(--green); }
+.verdict-stamp-name.parcial { color: var(--amber); }
+.verdict-pena-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.verdict-pena-num { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+.verdict-pena-label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; }
+.verdict-ratio { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--text2); font-style: italic; line-height: 1.75; margin-bottom: 16px; border-left: 2px solid rgba(212,168,67,0.3); padding-left: 14px; }
+.verdict-fundamentacao { font-size: 13px; color: var(--text2); font-weight: 300; line-height: 1.7; }
+.verdict-fundamentacao strong { color: var(--text); font-weight: 500; }
+.verdict-arts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.verdict-art-tag { padding: 3px 10px; border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; border: 1px solid rgba(212,168,67,0.25); color: var(--gold2); background: rgba(212,168,67,0.06); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- ══ TELA 1: HOME ══ -->
+<div id="screen-home" class="screen active">
+  <div class="home-deco"></div>
+  <div class="home-badge">⚖️ &nbsp; SIMULADOR DE DEBATE JURÍDICO &nbsp; ⚖️</div>
+  <h1 class="home-title">Tribunal<br><em>do Casal</em></h1>
+  <p class="home-sub">Escolha o caso · Escolha seu papel · Debata com fundamento</p>
+
+  <div class="case-picker">
+    <div class="case-picker-label">// escolha o caso</div>
+    <div class="case-grid" id="home-case-grid"></div>
+    <button class="random-pill" onclick="pickRandom()">🎲 &nbsp; CASO ALEATÓRIO</button>
+  </div>
+
+  <div class="role-row">
+    <div class="role-card acusacao" onclick="startGame('acusacao')">
+      <span class="role-icon">⚔️</span>
+      <div class="role-name">Acusação</div>
+      <div class="role-desc">Ministério Público. Prove a culpa, afaste as excludentes, peça condenação.</div>
+      <span class="role-arrow">→</span>
+    </div>
+    <div class="role-card defesa" onclick="startGame('defesa')">
+      <span class="role-icon">🛡️</span>
+      <div class="role-name">Defesa</div>
+      <div class="role-desc">Advogado de defesa. Construa teses, ataque qualificadoras, proteja o réu.</div>
+      <span class="role-arrow">→</span>
+    </div>
+    <div class="role-card juiz" onclick="startGame('juiz')">
+      <span class="role-icon">⚖️</span>
+      <div class="role-name">Juiz</div>
+      <div class="role-desc">Árbitro do debate. Calcule a pena, pontue e revele o veredito.</div>
+      <span class="role-arrow">→</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TELA 2: JOGADOR (ACUSAÇÃO / DEFESA) ══ -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <button class="topbar-back" onclick="goHome()">← VOLTAR</button>
+    <span class="topbar-case" id="tb-case">Caso 01</span>
+    <span class="topbar-sep">·</span>
+    <span class="topbar-title" id="tb-title">—</span>
+    <span class="topbar-role" id="tb-role">—</span>
+  </div>
+
+  <!-- Abas de navegação -->
+  <div class="tab-bar" id="player-tab-bar">
+    <button class="tab-btn active" onclick="showTab('player','caso')" data-tab="caso"><span class="tab-icon">📋</span> CASO</button>
+    <button class="tab-btn" onclick="showTab('player','args')" data-tab="args"><span class="tab-icon">⚡</span> ARGUMENTOS</button>
+    <button class="tab-btn" onclick="showTab('player','vade')" data-tab="vade"><span class="tab-icon">📖</span> VADE MÉCUM</button>
+    <button class="tab-btn" onclick="showTab('player','notas')" data-tab="notas"><span class="tab-icon">✏️</span> NOTAS</button>
+    <button class="tab-btn" onclick="showTab('player','decisao')" data-tab="decisao"><span class="tab-icon">🏛️</span> DECISÕES</button>
+  </div>
+
+  <div class="game-body">
+    <!-- TAB: CASO -->
+    <div class="tab-panel active" id="player-tab-caso">
+      <div class="brief-card">
+        <div class="brief-tags" id="g-tags"></div>
+        <div class="brief-title" id="g-title"></div>
+        <div class="brief-body" id="g-body"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="section-label" id="guide-label">// perguntas para guiar seu raciocínio</div>
+        <div class="guide-grid" id="guide-grid"></div>
+      </div>
+      <div class="hot-wrap">
+        <div class="hot-title">🔥 &nbsp; pontos polêmicos para o debate</div>
+        <div class="hot-grid" id="hot-grid"></div>
+      </div>
+    </div>
+
+    <!-- TAB: ARGUMENTOS -->
+    <div class="tab-panel" id="player-tab-args">
+      <div style="margin-bottom:14px;">
+        <div class="args-header">
+          <div class="args-title" id="args-title-text">// argumentos do caso</div>
+          <div class="args-counter" id="args-counter">0 marcados</div>
+        </div>
+        <div class="args-grid" id="args-grid"></div>
+      </div>
+    </div>
+
+    <!-- TAB: VADE MÉCUM -->
+    <div class="tab-panel" id="player-tab-vade">
+      <div class="vade-wrap">
+        <div class="vade-header" id="vade-hdr" onclick="toggleVade()" style="cursor:default;">
+          <div class="vade-header-left">
+            <span class="vade-hicon">📖</span>
+            <div>
+              <div class="vade-htitle" id="vade-htitle-text">Vade Mécum do Caso</div>
+              <div class="vade-hsub">ARTIGOS · PENAS · JURISPRUDÊNCIA</div>
+            </div>
+          </div>
+        </div>
+        <div class="vade-body open" id="vade-body" style="display:block;">
+          <div class="vade-tabs" id="vade-tabs"></div>
+          <div id="vade-panels"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: NOTAS -->
+    <div class="tab-panel" id="player-tab-notas">
+      <div class="notepad-wrap">
+        <div class="notepad-topbar">
+          <div class="notepad-title">✏️ &nbsp; SEU BLOCO DE NOTAS</div>
+          <div class="notepad-save-badge" id="save-badge">✓ salvo</div>
+        </div>
+        <div class="notepad-tpl-row">
+          <button class="notepad-tpl" onclick="insertTemplate('tese')">📌 Tese principal</button>
+          <button class="notepad-tpl" onclick="insertTemplate('sub')">🔀 Tese subsidiária</button>
+          <button class="notepad-tpl" onclick="insertTemplate('dosi')">🧮 Dosimetria</button>
+          <button class="notepad-tpl" onclick="insertTemplate('refu')">⚔️ Contra-argumentos</button>
+          <button class="notepad-tpl" onclick="insertTemplate('juri')">📚 Jurisprudência</button>
+        </div>
+        <div class="notepad-inner">
+          <textarea id="notepad-ta" oninput="onNoteInput()" placeholder="Construa aqui sua linha de raciocínio..."></textarea>
+        </div>
+        <div class="notepad-footer">
+          <span class="notepad-hint">NOTAS SALVAS POR CASO</span>
+          <span class="notepad-count" id="word-count">0 palavras</span>
+          <button class="notepad-clear" onclick="clearNote()">🗑 limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DECISÕES -->
+    <div class="tab-panel" id="player-tab-decisao">
+      <div class="inst-section">
+        <div class="section-label">// como o caso foi decidido</div>
+        <div class="inst-tabs">
+          <button class="inst-tab active" onclick="showInst(0)">1ª Instância</button>
+          <button class="inst-tab" onclick="showInst(1)">2ª Instância</button>
+          <button class="inst-tab" onclick="showInst(2)">STJ / STF</button>
+        </div>
+        <div class="inst-panel active" id="i-0"></div>
+        <div class="inst-panel" id="i-1"></div>
+        <div class="inst-panel" id="i-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TELA 3: JUIZ ══ -->
+<div id="screen-juiz" class="screen">
+  <div class="game-topbar">
+    <button class="topbar-back" onclick="goHome()">← VOLTAR</button>
+    <span class="topbar-case" id="jtb-case">Caso 01</span>
+    <span class="topbar-sep">·</span>
+    <span class="topbar-title" id="jtb-title">—</span>
+    <span class="topbar-role juiz">⚖️ JUIZ</span>
+  </div>
+
+  <!-- Abas juiz -->
+  <div class="tab-bar" id="juiz-tab-bar">
+    <button class="tab-btn active" onclick="showTab('juiz','caso')" data-tab="caso"><span class="tab-icon">📋</span> CASO</button>
+    <button class="tab-btn" onclick="showTab('juiz','placar')" data-tab="placar"><span class="tab-icon">🏆</span> PLACAR</button>
+    <button class="tab-btn" onclick="showTab('juiz','calc')" data-tab="calc"><span class="tab-icon">🧮</span> DOSIMETRIA</button>
+    <button class="tab-btn" onclick="showTab('juiz','notas')" data-tab="notas"><span class="tab-icon">✏️</span> NOTAS</button>
+    <button class="tab-btn" onclick="showTab('juiz','veredito')" data-tab="veredito"><span class="tab-icon">🔒</span> VEREDITO</button>
+  </div>
+
+  <div class="game-body">
+    <!-- TAB: CASO (juiz) -->
+    <div class="tab-panel active" id="juiz-tab-caso">
+      <div class="brief-card">
+        <div class="brief-tags" id="j-tags"></div>
+        <div class="brief-title" id="j-title"></div>
+        <div class="brief-body" id="j-body"></div>
+      </div>
+      <div class="hot-wrap">
+        <div class="hot-title">⚡ &nbsp; pontos em disputa — registre sua posição</div>
+        <div id="hot-juiz-grid"></div>
+      </div>
+    </div>
+
+    <!-- TAB: PLACAR -->
+    <div class="tab-panel" id="juiz-tab-placar">
+      <div class="placar-card">
+        <div class="placar-title">🏆 &nbsp; placar do debate</div>
+        <div class="placar-row">
+          <div class="placar-side acu">
+            <div class="placar-side-label">⚔️ Acusação</div>
+            <div class="placar-score" id="score-acu">0</div>
+            <div class="placar-pts">pontos</div>
+          </div>
+          <div class="placar-vs">vs</div>
+          <div class="placar-side def">
+            <div class="placar-side-label">🛡️ Defesa</div>
+            <div class="placar-score" id="score-def">0</div>
+            <div class="placar-pts">pontos</div>
+          </div>
+        </div>
+        <div class="placar-btn-row">
+          <button class="placar-btn acu" onclick="addScore('acu')">+ Ponto Acusação</button>
+          <button class="placar-btn def" onclick="addScore('def')">+ Ponto Defesa</button>
+          <button class="placar-btn reset-btn" onclick="resetScore()">↺</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DOSIMETRIA -->
+    <div class="tab-panel" id="juiz-tab-calc">
+      <div class="calc-card">
+        <div class="calc-header">
+          <div class="calc-icon">🧮</div>
+          <div>
+            <div class="calc-title">Calculadora de Pena</div>
+            <div class="calc-subtitle">DOSIMETRIA INTERATIVA — BASEADA NO CP</div>
+          </div>
+        </div>
+        <div class="pena-result-bar">
+          <div class="pena-years-display" id="pena-display">—<span> anos</span></div>
+          <div class="pena-result-info">
+            <div class="pena-regime" id="pena-regime">Defina a pena-base para começar</div>
+            <div class="pena-breakdown" id="pena-breakdown">—</div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <span class="slider-label">1ª FASE — Pena-base (Art. 59)</span>
+            <span class="slider-value" id="pb-val">—</span>
+          </div>
+          <input type="range" id="slider-pb" min="0" max="100" value="50" oninput="calcPena()">
+          <div style="display:flex; justify-content:space-between; margin-top:4px;">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);" id="pb-min-label">mínimo</span>
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);" id="pb-max-label">máximo</span>
+          </div>
+        </div>
+        <div class="calc-divider"></div>
+        <div style="margin-bottom:14px;">
+          <div class="slider-label" style="margin-bottom:10px;">2ª FASE — Agravantes e Atenuantes (Arts. 61–66)</div>
+          <div class="check-group" id="check-agravantes"></div>
+        </div>
+        <div class="calc-divider"></div>
+        <div>
+          <div class="slider-label" style="margin-bottom:10px;">3ª FASE — Causas de Aumento/Diminuição</div>
+          <div class="check-group" id="check-majorantes"></div>
+        </div>
+        <div class="calc-divider"></div>
+        <div class="slider-label" style="margin-bottom:8px;">REGIME DE CUMPRIMENTO</div>
+        <div id="regime-detail" style="font-size:12.5px;color:var(--text2);font-weight:300;line-height:1.6;"></div>
+      </div>
+    </div>
+
+    <!-- TAB: NOTAS (juiz) -->
+    <div class="tab-panel" id="juiz-tab-notas">
+      <div class="notepad-wrap">
+        <div class="notepad-topbar">
+          <div class="notepad-title">✏️ &nbsp; NOTAS DO JUIZ</div>
+          <div class="notepad-save-badge" id="j-save-badge">✓ salvo</div>
+        </div>
+        <div class="notepad-tpl-row">
+          <button class="notepad-tpl" onclick="insertJuizTemplate('intro')">📜 Relatório</button>
+          <button class="notepad-tpl" onclick="insertJuizTemplate('fund')">⚖️ Fundamentação</button>
+          <button class="notepad-tpl" onclick="insertJuizTemplate('disp')">🔨 Dispositivo</button>
+          <button class="notepad-tpl" onclick="insertJuizTemplate('dosi')">🧮 Dosimetria</button>
+        </div>
+        <div class="notepad-inner">
+          <textarea id="juiz-notepad-ta" oninput="onJuizNoteInput()" placeholder="Rascunhe aqui sua sentença ou pontos do debate..."></textarea>
+        </div>
+        <div class="notepad-footer">
+          <span class="notepad-hint">NOTAS SALVAS POR CASO</span>
+          <span class="notepad-count" id="j-word-count">0 palavras</span>
+          <button class="notepad-clear" onclick="clearJuizNote()">🗑 limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: VEREDITO -->
+    <div class="tab-panel" id="juiz-tab-veredito">
+      <div id="verdict-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// VADE MÉCUM — todos os 8 casos
+// ═══════════════════════════════════════════
+const VADE = [
+  // Caso 01: Mercado da Madrugada
+  [
+    { tab:"Art. 155 CP", id:"Código Penal · Art. 155", titulo:"Furto", fonte:"Decreto-Lei nº 2.848/1940", pena:"1 a 4 anos + multa (caput) / até 5a4m com §1º",
+      texto:`Subtrair, <strong>para si ou para outrem, coisa alheia móvel</strong>: Pena – reclusão, de 1 a 4 anos, e multa.<br><br><strong>§1º</strong> – A pena aumenta-se de um terço, se o crime é praticado <strong>durante o repouso noturno</strong>.`,
+      exp:`O furto exige <strong>subtração sem violência</strong>. O §1º aplica aumento de 1/3 pelo horário noturno (≈22h–6h). O §4º,I qualifica pelo <strong>rompimento de obstáculo</strong>: a porta dos fundos é obstáculo geral ou específico ao bem?`,
+      pars:[{n:"§4º,I",t:"<strong>Rompimento de obstáculo</strong>: pena de 2 a 8 anos. STJ exige que o obstáculo seja específico à proteção do bem subtraído."},{n:"§2º",t:"<strong>Furto privilegiado</strong>: réu primário + coisa de pequeno valor → redução de 1/3 a 2/3 ou substituição por multa."}],
+      juris:[{t:"Insignificância é incompatível com qualificadoras ou causas de aumento.",r:"STJ · AgRg no AREsp 1.654.321/SP"},{t:"O §1º se aplica pelo horário, não pelo estado de sono da vítima.",r:"STJ · HC 512.100/MG"}],
+      dica:"⚖️ Defesa: afaste rompimento de obstáculo (§4º,I) — pena cai para caput + §1º, viabilizando Art. 44. Acusação: empilhe §1º + §4º,I e afaste insignificância com o próprio STJ." },
+    { tab:"Art. 24 CP", id:"Código Penal · Art. 24", titulo:"Estado de Necessidade", fonte:"Decreto-Lei nº 2.848/1940", pena:"Excludente de ilicitude — absolvição se reconhecido",
+      texto:`Considera-se em estado de necessidade quem pratica o fato para <strong>salvar de perigo atual, que não provocou por sua vontade, nem podia de outro modo evitar, direito próprio ou alheio</strong>, cujo sacrifício, nas circunstâncias, não era razoável exigir-se.`,
+      exp:`4 requisitos simultâneos: perigo atual, não causado pelo agente, inevitável por outro meio, bem sacrificado de valor igual ou menor. O ponto crítico: havia farmácias e UPAs abertas?`,
+      pars:[{n:"§2º",t:"Se o agente devia suportar o perigo, pode ter a pena reduzida de 1/3 a 2/3."}],
+      juris:[{t:"Estado de necessidade exige prova de que o perigo era atual e que o agente esgotou meios lícitos disponíveis.",r:"STJ · REsp 1.789.012/SP"}],
+      dica:"⚖️ Defesa: prove que Marcos não tinha opção real — foco na 'inevitabilidade'. Acusação: mostre os meios lícitos disponíveis naquele horário (UPA, CRAS, farmácia)." },
+    { tab:"Art. 44 CP", id:"Código Penal · Art. 44", titulo:"Penas Alternativas", fonte:"Decreto-Lei nº 2.848/1940", pena:"Substitui pena privativa — sem prisão efetiva",
+      texto:`As penas restritivas de direitos substituem as privativas de liberdade quando: pena <strong>não superior a 4 anos</strong>, crime sem violência, réu <strong>não reincidente</strong> em crime doloso.`,
+      exp:`Para Marcos: réu primário ✓, sem violência ✓, pena tendendo a 1–2 anos ✓ — todos os requisitos presentes. A substituição é praticamente automática.`,
+      pars:[{n:"§2º",t:"Cada dia de reclusão = 1 hora de prestação de serviços."}],
+      juris:[{t:"Réu primário condenado a pena ≤ 4 anos por crime sem violência tem direito subjetivo à substituição.",r:"STJ · HC 487.233/SP"}],
+      dica:"⚖️ Mesmo que perca na tese principal, a defesa pode 'vencer' na dosimetria. Meta: pena no mínimo + Art. 44." },
+    { tab:"Insignificância", id:"Princípio da Insignificância", titulo:"Bagatela", fonte:"Construção jurisprudencial STF/STJ", pena:"Atipicidade — absolvição",
+      texto:`Aplica-se quando a lesão é <strong>tão ínfima que não justifica a intervenção penal</strong>. Vetores: mínima ofensividade, ausência de periculosidade, reduzido grau de reprovabilidade, inexpressividade da lesão.`,
+      exp:`R$127: baixo valor. Réu primário. Mas: repouso noturno eleva reprovabilidade; rompimento de obstáculo também. O STJ tem linha firme de que <strong>qualificadoras afastam a bagatela</strong>.`,
+      pars:[{n:"Vetor 1",t:"Mínima ofensividade: R$127 → favorável à defesa."},{n:"Vetor 3",t:"Grau de reprovabilidade: repouso noturno + arrombamento → desfavorável."}],
+      juris:[{t:"Insignificância incompatível com qualificadoras.",r:"STJ · AgRg no HC 654.321/MG"},{t:"Miserabilidade comprovada pode excepcionar — posição minoritária.",r:"STF · HC 110.475/RS"}],
+      dica:"⚖️ Tese arriscada para a defesa — mas vale arguir subsidiariamente. O contexto de miséria pode valer na dosimetria do Art. 59." }
+  ],
+  // Caso 02: A Faca que Voltou
+  [
+    { tab:"Art. 25 CP", id:"Código Penal · Art. 25", titulo:"Legítima Defesa", fonte:"Decreto-Lei nº 2.848/1940", pena:"Excludente — absolvição plena se reconhecida",
+      texto:`Entende-se em legítima defesa quem, usando <strong>moderadamente dos meios necessários, repele agressão injusta, atual ou iminente, a direito seu ou de outrem</strong>.`,
+      exp:`4 requisitos: agressão injusta, atual ou iminente, meios moderados e necessários, conhecimento da situação. O nó: Diego foi embora 2 horas antes. A defesa precisa mostrar que a ameaça era <strong>iminente pela perspectiva de Renata</strong> — dado o histórico de violência e a SMA.`,
+      pars:[{n:"Excesso",t:"Quem excede os limites da legítima defesa responde pelo excesso (Art. 23 §único)."},{n:"Putativa",t:"Art. 20 §1º: erro escusável sobre a situação de fato → isenta de pena."}],
+      juris:[{t:"SMA altera a percepção temporal da vítima de violência crônica — pode configurar legítima defesa ou putativa.",r:"STJ · HC 256.060/RS"},{t:"Intervalo entre ameaça e reação não afasta automaticamente a legítima defesa quando há histórico documentado.",r:"TJRS · Ap. 70054321/RS"}],
+      dica:"⚖️ Defesa: dois caminhos — (A) legítima defesa real pela SMA, (B) putativa pelo Art. 20 §1º. O B é tecnicamente mais sólido. Acusação: explore a objetividade da 'iminência'." },
+    { tab:"Art. 121 CP", id:"Código Penal · Art. 121", titulo:"Homicídio Doloso", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão de 6 a 20 anos (simples) / 12 a 30 anos (qualificado)",
+      texto:`Matar alguém: Pena – reclusão, de <strong>6 a 20 anos</strong>. Julgamento pelo <strong>Tribunal do Júri</strong>. Na pronúncia: in dubio pro societate.`,
+      exp:`Homicídio doloso é do Júri. A pronúncia aplica in dubio pro societate. No júri: 7 jurados, maioria simples (4x3), votação sigilosa, não precisam motivar.`,
+      pars:[{n:"§1º",t:"<strong>Homicídio privilegiado</strong>: redução de 1/6 a 1/3 por relevante valor moral ou domínio de violenta emoção."}],
+      juris:[{t:"Anulação do júri exige que a decisão seja manifestamente contrária às provas.",r:"STJ · REsp 1.943.111/SP"}],
+      dica:"⚖️ A pronúncia vai acontecer — in dubio pro societate. A disputa real é no júri. Defesa: empatia com 4 BO + laudo SMA." },
+    { tab:"Art. 20 §1º CP", id:"Código Penal · Art. 20, §1º", titulo:"Legítima Defesa Putativa", fonte:"Decreto-Lei nº 2.848/1940", pena:"Isenção (erro escusável) ou redução 1/3–2/3",
+      texto:`É isento de pena quem, por <strong>erro plenamente justificado pelas circunstâncias</strong>, supõe situação de fato que, se existisse, tornaria a ação legítima.`,
+      exp:`Renata acreditava que seria morta. O erro era justificável? Com 4 BO e laudo de SMA — qualquer pessoa naquela situação poderia ter o mesmo medo.`,
+      pars:[{n:"Escusável",t:"Erro que qualquer pessoa razoável cometeria → isenta de pena."},{n:"Inescusável",t:"Erro evitável → redução de pena de 1/3 a 2/3."}],
+      juris:[{t:"Mulher vítima de violência doméstica crônica pode ter seu erro reconhecido como escusável.",r:"STJ · HC 312.088/MS"}],
+      dica:"⚖️ Se o júri não comprar a legítima defesa real, a putativa é o segundo argumento. Para a acusação: Renata foi ATÉ Diego — isso denota premeditação." },
+    { tab:"Lei Maria da Penha", id:"Lei 11.340/2006", titulo:"Lei Maria da Penha", fonte:"Lei Federal nº 11.340/2006", pena:"Não é tipo penal — lei de proteção e contexto",
+      texto:`Cria mecanismos para coibir a violência doméstica e familiar contra a mulher.`,
+      exp:`Relevante como contexto: (1) os 4 BO documentam violência crônica; (2) o ciclo da violência é fato notório; (3) as medidas protetivas estavam disponíveis — argumento da acusação.`,
+      pars:[{n:"Art. 5º,III",t:"Inclui ex-cônjuge e ex-companheiro."},{n:"Art. 22",t:"Medidas protetivas disponíveis para Renata — por que não foram usadas?"}],
+      juris:[{t:"Histórico de violência documentado em BOs é prova do ciclo e do fundado temor.",r:"STJ · RHC 144.112/MG"}],
+      dica:"⚖️ Acusação: 'a LMP existia — por que não usou?' Defesa: 'a LMP falha — 4 BO e Diego continuou.'" }
+  ],
+  // Caso 03: O Noivo de Minas
+  [
+    { tab:"Art. 171 CP", id:"Código Penal · Art. 171", titulo:"Estelionato", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão 1 a 5 anos + multa / majorado: até 6a8m",
+      texto:`Obter vantagem ilícita em prejuízo alheio, <strong>induzindo ou mantendo alguém em erro, mediante artifício, ardil, ou qualquer outro meio fraudulento</strong>.`,
+      exp:`3 elementos: fraude (identidade falsa por 8 meses), indução em erro (Joana acreditou), vantagem ilícita (R$47.000). Todos presentes. A batalha é nas majorantes: §3º (vulnerabilidade) e §5º (eletrônico).`,
+      pars:[{n:"§3º",t:"<strong>Majorante da vulnerabilidade</strong>: +1/3 se vítima é idosa (60+). Joana tem 52 — não é idosa."},{n:"§5º",t:"<strong>Estelionato eletrônico</strong> (Lei 14.155/2021): +1/3 a +2/3 via dispositivo eletrônico."}],
+      juris:[{t:"§5º aplica-se ao estelionato via aplicativo de relacionamento e PIX.",r:"STJ · RHC 158.221/SP"}],
+      dica:"⚖️ A acusação quer empilhar §3º + §5º. A defesa deve afastar §3º (52 anos ≠ idosa) e reduzir o aumento do §5º." },
+    { tab:"Art. 71 CP", id:"Código Penal · Art. 71", titulo:"Crime Continuado", fonte:"Decreto-Lei nº 2.848/1940", pena:"Pena do crime mais grave + 1/6 a 2/3",
+      texto:`Dois ou mais crimes da mesma espécie em condições semelhantes de tempo, lugar e modo: os subsequentes são havidos como <strong>continuação do primeiro</strong>.`,
+      exp:`23 PIX → crimes separados ou crime continuado? Mesma vítima, mesmo golpe, mesmo período → critérios do Art. 71 preenchidos. A defesa QUER o crime continuado.`,
+      pars:[{n:"Requisitos",t:"Mesma espécie, condições semelhantes de tempo, lugar e modo."},{n:"Cálculo",t:"Pena-base + §5º + aumento de 1/6 a 2/3 (23 atos → tende ao máximo)."}],
+      juris:[{t:"23 transferências ao mesmo esquema configuram crime continuado.",r:"STJ · REsp 1.899.234/RJ"}],
+      dica:"⚖️ Defesa: requeira crime continuado expressamente. Acusação: verifique se crimes autônomos resultariam em pena maior." },
+    { tab:"Art. 29 CP", id:"Código Penal · Art. 29", titulo:"Concurso de Pessoas", fonte:"Decreto-Lei nº 2.848/1940", pena:"Cada réu responde na medida da sua culpabilidade",
+      texto:`Quem de qualquer modo concorre para o crime incide nas penas, na medida de sua culpabilidade. §1º: participação de menor importância → redução de 1/6 a 1/3.`,
+      exp:`Felipe = contato direto com Joana. Os outros dois = criação de perfis, gestão de contas. A defesa dos 'suportes' alega participação de menor importância (§1º).`,
+      pars:[{n:"§1º",t:"Participação de menor importância: redução de 1/6 a 1/3."},{n:"Medida",t:"Felipe responde pelo crime consumado. Os suportes, pelo grau de contribuição."}],
+      juris:[{t:"Participação de menor importância cabível quando o co-réu limita-se a atos preparatórios.",r:"STJ · HC 445.678/MG"}],
+      dica:"⚖️ Para a defesa dos suportes: nunca conversaram com Joana. Para Felipe: confissão parcial pode ser atenuante (Art. 65,III,d CP)." }
+  ],
+  // Caso 04: A Curva das 23h
+  [
+    { tab:"Art. 302 CTB", id:"CTB · Art. 302", titulo:"Homicídio Culposo no Trânsito", fonte:"Lei nº 9.503/1997", pena:"Detenção 2 a 4 anos + CNH / +1/3 a 1/2 com omissão",
+      texto:`Praticar homicídio culposo na direção de veículo automotor: Pena – detenção de <strong>2 a 4 anos</strong> + suspensão da CNH. §1º,III: aumento de <strong>1/3 a 1/2</strong> se o agente <strong>deixar de prestar socorro</strong>.`,
+      exp:`Culpa = imprudência, negligência ou imperícia. Carla: velocidade no limite → sem imprudência. Silvio: fora da faixa, de preto, à noite → culpa concorrente. A culpa de Carla vem da omissão.`,
+      pars:[{n:"§1º,II",t:"Álcool acima do limite criminal (0,33 mg/L). Carla: 0,18 mg/L → abaixo do limite. Majorante NÃO aplicável."},{n:"§2º",t:"Álcool acima do limite: pena de 5 a 8 anos. Não se aplica."}],
+      juris:[{t:"Culpa concorrente do pedestre não afasta o crime mas atenua a reprovabilidade.",r:"STJ · REsp 1.789.432/SP"}],
+      dica:"⚖️ Defesa: separe dois momentos — (1) o atropelamento: sem culpa; (2) a omissão: onde ela errou. Ataque ambos separadamente." },
+    { tab:"Omissão de Socorro", id:"CTB Art. 302 §1º,III + CP Art. 135", titulo:"Omissão de Socorro", fonte:"CTB + Código Penal", pena:"Majorante dentro do CTB / crime autônomo no CP",
+      texto:`CTB Art. 302 §1º,III: aumento de 1/3 a 1/2 por omissão de socorro. CP Art. 135: crime autônomo — basta ligar ao SAMU.`,
+      exp:`O STJ é claro: o dever de socorro não exige identificação. Carla poderia ligar anonimamente. O nemo tenetur protege contra auto-incriminação — não contra o dever de ajudar.`,
+      pars:[{n:"Pânico",t:"Não é excludente previsto no CP. A defesa pode tentar 'inexigibilidade de conduta diversa' (Art. 22) — cabimento discutível."},{n:"Anônimo",t:"SAMU pode ser acionado sem identificação — o STJ afastou expressamente o nemo tenetur como justificativa."}],
+      juris:[{t:"Dever de socorro não viola nemo tenetur — o réu pode acionar o SAMU sem identificar-se.",r:"STJ · HC 512.344/SP"}],
+      dica:"⚖️ A tese do nemo tenetur é a mais fraca. Foque em: pânico como atenuante inominada (Art. 66) + culpa concorrente + pena alternativa." },
+    { tab:"Culpa Concorrente", id:"Concorrência de Culpas", titulo:"Culpa Concorrente da Vítima", fonte:"Doutrina e jurisprudência STJ", pena:"Não afasta o crime — atenua a pena",
+      texto:`A culpa concorrente da vítima não exclui a responsabilidade penal do réu, mas é circunstância relevante na dosimetria — pode ser aplicada como atenuante inominada (Art. 66) ou favorável no Art. 59 CP.`,
+      exp:`Silvio: atravessou fora da faixa ✓, à noite ✓, de preto ✓, sem iluminação ✓. Carla: velocidade no limite ✓. A câmera registrou tudo.`,
+      pars:[{n:"Art. 66 CP",t:"Atenuante inominada: 'circunstância relevante anterior ou posterior ao crime'."},{n:"Art. 59 CP",t:"Comportamento da vítima pode reduzir a pena-base."}],
+      juris:[{t:"Culpa concorrente da vítima-pedestre em infração representa circunstância favorável na pena-base.",r:"STJ · REsp 1.654.876/SP"}],
+      dica:"⚖️ Construa: 'Silvio estava na escuridão, de preto, fora da faixa — Carla fez tudo certo ao dirigir.' Não absolve, mas reduz anos de pena." }
+  ],
+  // Caso 05: Nunca Vai Ser Livre
+  [
+    { tab:"Art. 147-A CP", id:"Código Penal · Art. 147-A", titulo:"Perseguição (Stalking)", fonte:"Lei 14.132/2021", pena:"Reclusão 6 meses a 2 anos + multa / +1/3 com LMP",
+      texto:`Perseguir alguém, reiteradamente e por qualquer meio, <strong>ameaçando-lhe a integridade física ou psicológica, restringindo-lhe a capacidade de locomoção ou invadindo sua esfera de liberdade ou privacidade</strong>.`,
+      exp:`Crime novo (2021) — jurisprudência em construção. 847 mensagens + 11 aparições + perfis falsos + bilhetes = padrão sistemático.`,
+      pars:[{n:"§1º,I",t:"Pena aumentada de metade se praticado contra mulher."},{n:"Reiteração",t:"O tipo exige mais de uma conduta. Aqui há centenas."}],
+      juris:[{t:"Reiteração de mensagens, aparições físicas e perfis falsos preenche o Art. 147-A.",r:"TJSP · Ap. Crim. 0034567-89.2022"}],
+      dica:"⚖️ Defesa: ataque o elemento 'ameaçando a integridade psicológica'. Acusação: o padrão sistemático e o laudo de Larissa provam o dano." },
+    { tab:"Art. 147 CP", id:"Código Penal · Art. 147", titulo:"Ameaça", fonte:"Decreto-Lei nº 2.848/1940", pena:"Detenção 1 a 6 meses ou multa",
+      texto:`Ameaçar alguém de <strong>causar-lhe mal injusto e grave</strong>.`,
+      exp:`A frase: 'você vai me ver onde menos espera'. É ameaça ou desabafo? O contexto de 6 meses de perseguição eleva a verossimilhança.`,
+      pars:[{n:"Consunção",t:"Crime mais grave (stalking) absorve crime menos grave (ameaça)."}],
+      juris:[{t:"Frase ambígua em contexto de perseguição reiterada deve ser interpretada pela perspectiva da vítima.",r:"STJ · HC 567.890/SP"}],
+      dica:"⚖️ Para a defesa: isole a frase do contexto. Para a acusação: o contexto É a ameaça." },
+    { tab:"Semi-Imput.", id:"Código Penal · Art. 26, §único", titulo:"Semi-Imputabilidade", fonte:"Decreto-Lei nº 2.848/1940", pena:"Redução de 1/3 a 2/3 ou medida de segurança (Art. 98)",
+      texto:`A pena pode ser reduzida de 1/3 a 2/3, ou aplicar-se medida de segurança, se o agente, em virtude de <strong>perturbação de saúde mental</strong>, não era inteiramente capaz de entender o caráter ilícito do fato.`,
+      exp:`O laudo: transtorno de apego ansioso. O STJ rejeitou: o transtorno não demonstrou que Bruno não entendia que estava errado.`,
+      pars:[{n:"Art. 98 CP",t:"Medida de segurança pode substituir a pena privativa para semi-imputáveis."},{n:"Laudo",t:"Precisa indicar: diagnóstico, impacto na capacidade de entendimento, grau percentual."}],
+      juris:[{t:"Transtorno de apego ansioso não elimina a capacidade de entendimento.",r:"STJ · HC 601.234/SP"}],
+      dica:"⚖️ A semi-imputabilidade é técnica: o laudo precisa dizer que Bruno 'não conseguia se autodeterminar' — não só que 'sofria'." },
+    { tab:"Lei Maria da Penha", id:"Lei 11.340/2006 · Art. 40", titulo:"LMP no Stalking", fonte:"Lei Federal nº 11.340/2006", pena:"Majorante de +1/3 sobre a pena do crime",
+      texto:`Art. 40: penas dos crimes contra a mulher praticados com violência doméstica serão aumentadas de <strong>1/3</strong>. Art. 5º,III: inclui ex-namorados.`,
+      exp:`2 anos de namoro → LMP se aplica (Art. 5º,III). Isso significa: +1/3 na pena; competência da Vara de Violência Doméstica; medidas protetivas imediatas.`,
+      pars:[{n:"Art. 5º,III",t:"'relação íntima de afeto, na qual o agressor conviva ou tenha convivido com a ofendida' — 2 anos de namoro se encaixa."},{n:"Art. 22",t:"Medidas protetivas: afastamento, proibição de contato, monitoramento."}],
+      juris:[{t:"LMP aplica-se ao namoro, ainda que sem coabitação.",r:"STJ · REsp 1.977.654/SP"}],
+      dica:"⚖️ A LMP como majorante (+1/3) eleva a pena máxima de 2 anos para 2a8m. O campo de batalha real é a semi-imputabilidade e a consunção da ameaça." }
+  ],
+  // Caso 06: O Pai de Aluguel
+  [
+    { tab:"Art. 168-A CP", id:"Código Penal · Art. 168-A", titulo:"Apropriação Indébita Previdenciária", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão 2 a 5 anos + multa",
+      texto:`Deixar de repassar à Previdência Social as contribuições recolhidas dos contribuintes, no prazo e forma legal ou convencional: Pena – reclusão, de <strong>2 a 5 anos</strong>, e multa.`,
+      exp:`Roberto reteve o INSS dos funcionários por 14 meses e não repassou. O crime é <strong>omissivo próprio</strong> — o dolo é a consciência de não repassar. A extinção da punibilidade por pagamento (§2º) é o maior argumento da defesa.`,
+      pars:[{n:"§1º,I",t:"Mesma pena para quem deixa de recolher contribuição do empregador."},{n:"§2º",t:"<strong>Extinção da punibilidade</strong> se pago antes do recebimento da denúncia. Após: apenas atenuante."}],
+      juris:[{t:"Parcelamento anterior à denúncia suspende a ação penal — pagamento integral extingue a punibilidade.",r:"STJ · REsp 1.958.674/SP"},{t:"Não é necessário provar intenção específica: basta a ciência do não-repasse.",r:"STF · RHC 116.783/SP"}],
+      dica:"⚖️ Defesa: Roberto estava em recuperação judicial — há excludente de exigibilidade? Mas o STJ é rígido. Priorize o parcelamento para extinguir a punibilidade." },
+    { tab:"Art. 334-A CP", id:"Código Penal · Art. 334-A", titulo:"Descaminho / Contrabando", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão 1 a 4 anos (descaminho) / 2 a 5 anos (contrabando)",
+      texto:`Importar ou exportar mercadoria proibida: Pena – reclusão de 2 a 5 anos. <strong>Descaminho</strong> (Art. 334): importar sem recolher tributos devidos — pena de 1 a 4 anos.`,
+      exp:`A acusação classifica os insumos importados como <strong>contrabando</strong> (proibição). A defesa sustenta que são apenas <strong>descaminho</strong> (tributos não pagos). A distinção vale de 1 a 2 anos de diferença na pena mínima.`,
+      pars:[{n:"§1º,I",t:"Descaminho: pena aumentada de 1/3 se em operação de transporte."},{n:"Concurso",t:"Contrabando e descaminho absorvem crime-meio (falsidade documental)."}],
+      juris:[{t:"A distinção entre contrabando e descaminho depende da natureza da mercadoria, não do valor sonegado.",r:"STJ · HC 612.345/SP"}],
+      dica:"⚖️ Acusação: prove a proibição do produto específico. Defesa: demonstre que apenas o tributo deixou de ser pago — classifique como descaminho e ganhe na pena mínima." },
+    { tab:"Art. 59/68 CP", id:"Código Penal · Arts. 59 e 68", titulo:"Dosimetria — Concurso Material", fonte:"Decreto-Lei nº 2.848/1940", pena:"Sistema trifásico + soma de penas no concurso",
+      texto:`Art. 68: as penas de crimes em concurso material (Art. 69) somam-se; o juiz profere sentenças distintas.`,
+      exp:`Roberto responde por 3 crimes em concurso material: (1) Apropriação indébita previdenciária, (2) Descaminho/contrabando, (3) Falsidade documental (Art. 297). A defesa busca concurso formal ou continência para reduzir o total.`,
+      pars:[{n:"Art. 69 CP",t:"Concurso material: penas somam-se."},{n:"Art. 70 CP",t:"Concurso formal: pena do crime mais grave + aumento de 1/6 a 1/2."}],
+      juris:[{t:"Crimes previdenciários e descaminho são autônomos — concurso material é a regra.",r:"STJ · REsp 2.011.234/PR"}],
+      dica:"⚖️ Defesa: tente concurso formal ou absorção da falsidade como crime-meio. Cada crime convertido reduz significativamente a pena total." }
+  ],
+  // Caso 07: A Testemunha Que Sumiu
+  [
+    { tab:"Art. 342 CP", id:"Código Penal · Art. 342", titulo:"Falso Testemunho", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão 2 a 4 anos + multa / majorado: 3 a 6 anos",
+      texto:`Fazer afirmação falsa, ou negar ou calar a verdade como testemunha, perito, contador, tradutor ou intérprete em processo judicial: Pena – reclusão, de <strong>2 a 4 anos</strong>, e multa.`,
+      exp:`Marina prestou depoimento falso em processo de inventário beneficiando o irmão de seu namorado. Todos os elementos estão presentes: afirmação falsa, prestada sob compromisso, em processo judicial. O debate é sobre o <strong>motivo</strong> — coação ou cumplicidade voluntária?`,
+      pars:[{n:"§1º",t:"Pena de 3 a 6 anos se o crime é praticado mediante suborno (corrupção ativa de testemunha)."},{n:"Retratação",t:"Art. 342 §2º: retratação antes da sentença extingue a punibilidade."}],
+      juris:[{t:"Falso testemunho se consuma com o encerramento do depoimento — retratação posterior não apaga o crime consumado.",r:"STJ · HC 589.012/MG"},{t:"Coação provada afasta a culpabilidade da testemunha coagida.",r:"TJSP · Ap. 0123456-78.2021"}],
+      dica:"⚖️ Defesa de Marina: coação moral irresistível (Art. 22 CP) — prove que ela tinha fundado medo. Acusação: o suborno do namorado configura o §1º, agravando a pena." },
+    { tab:"Art. 347 CP", id:"Código Penal · Art. 347", titulo:"Fraude Processual", fonte:"Decreto-Lei nº 2.848/1940", pena:"Detenção 3 meses a 2 anos + multa / 1 a 3 anos com violência",
+      texto:`Inovar artificiosamente, na pendência de processo civil ou administrativo, o estado de lugar, de coisa ou de pessoa, com o fim de induzir a erro o juiz ou o perito.`,
+      exp:`Ciro (namorado de Marina) orquestrou a estratégia: apresentou documentos falsificados e instruiu Marina a mentir. A fraude processual absorve ou é distinta do falso testemunho?`,
+      pars:[{n:"Concurso",t:"Fraude processual + falso testemunho: crimes autônomos praticados por pessoas diferentes (Ciro e Marina)."},{n:"§único",t:"Pena de 1 a 3 anos se cometida com violência ou grave ameaça."}],
+      juris:[{t:"Quem instrui testemunha a mentir responde por fraude processual, não por falso testemunho.",r:"STJ · REsp 1.854.001/SP"}],
+      dica:"⚖️ Ciro = fraude processual (Art. 347) + corrupção ativa de testemunha. Marina = falso testemunho (Art. 342) com possível coação. São crimes distintos para réus distintos." },
+    { tab:"Art. 22 CP", id:"Código Penal · Art. 22", titulo:"Coação Moral Irresistível", fonte:"Decreto-Lei nº 2.848/1940", pena:"Isenta de pena o coagido / pune o coator",
+      texto:`Se o fato é cometido sob <strong>coação irresistível</strong> ou em estrita obediência a ordem, não manifestamente ilegal, de superior hierárquico, só é punível o autor da coação ou da ordem.`,
+      exp:`Para a coação ser irresistível, o mal prometido deve ser grave, sério e imediato. 'Ciro disse que me largaria' é coação? A defesa precisa construir uma pressão concreta e real, não apenas o risco de término do relacionamento.`,
+      pars:[{n:"Resistível",t:"Coação resistível: atenua a pena do coagido, mas não isenta."},{n:"Irresistível",t:"Coação irresistível: punido apenas o coator — Marina seria absolvida."}],
+      juris:[{t:"Ameaça de término de relacionamento não configura coação irresistível para fins penais.",r:"STJ · RHC 134.567/SP"},{t:"Coação por violência física ou ameaça concreta à vida é irresistível.",r:"STJ · HC 478.234/MG"}],
+      dica:"⚖️ Foco na credibilidade: Marina tinha meios de recusar? Sabia da gravidade? A retratação antes da sentença (Art. 342 §2º) é o caminho mais seguro para extinguir a punibilidade." }
+  ],
+  // Caso 08: A Herança Envenenada
+  [
+    { tab:"Art. 168 CP", id:"Código Penal · Art. 168", titulo:"Apropriação Indébita", fonte:"Decreto-Lei nº 2.848/1940", pena:"Reclusão 1 a 4 anos + multa / +1/3 com abuso de cargo",
+      texto:`Apropriar-se de coisa alheia móvel, de que tem a posse ou a detenção: Pena – reclusão, de 1 a 4 anos, e multa. <strong>§1º,II</strong>: pena aumentada de 1/3 se o agente recebeu a coisa na qualidade de tutor, curador, inventariante.`,
+      exp:`Fernanda era inventariante nomeada judicialmente — figura diretamente listada no §1º,II. O desvio de R$340.000 do inventário da mãe configura apropriação indébita qualificada, com todos os elementos presentes.`,
+      pars:[{n:"§1º,II",t:"Qualificadora: inventariante que se apropria dos bens. Pena: 1a4m a 5a4m."},{n:"Distinção",t:"Não é estelionato: Fernanda já tinha posse legítima dos bens — não houve fraude para obter a posse, apenas para desviar."}],
+      juris:[{t:"Inventariante que desvia valores responde pelo Art. 168 §1º,II, não por estelionato.",r:"STJ · REsp 1.923.456/SP"},{t:"A qualificadora §1º,II independe de dolo específico: basta a inversão do animus.",r:"TJSP · Ap. 0034567-22.2020"}],
+      dica:"⚖️ Acusação: a qualificadora é automática — Fernanda era inventariante. Defesa: tente desclassificar para desvio civil se o animus domini não estiver provado." },
+    { tab:"Art. 1.016 CC", id:"Código Civil · Art. 1.016", titulo:"Responsabilidade Civil do Gestor", fonte:"Lei nº 10.406/2002", pena:"Responsabilidade civil — restituição + danos",
+      texto:`Os administradores respondem solidariamente perante a sociedade e os terceiros prejudicados por culpa no desempenho de suas funções.`,
+      exp:`O processo penal e a ação civil de inventário correm em paralelo. A prova produzida no inventário (extratos bancários, laudos contábeis) é aproveitada no processo penal. A reparação civil é obrigatória na condenação (Art. 91,I CP).`,
+      pars:[{n:"Art. 91,I CP",t:"A condenação torna certa a obrigação de indenizar o dano causado pelo crime."},{n:"Paralelo",t:"As instâncias são independentes — absolvição penal por insuficiência de prova não impede ação civil."}],
+      juris:[{t:"Prova do desvio em inventário é apta para embasar a ação penal.",r:"STJ · REsp 1.876.543/RJ"}],
+      dica:"⚖️ A defesa pode tentar 'emprestado' em vez de 'desviado' — mas precisa de prova documental de promessa de devolução." },
+    { tab:"Art. 65,III,b CP", id:"Código Penal · Art. 65,III,b", titulo:"Confissão e Atenuantes", fonte:"Decreto-Lei nº 2.848/1940", pena:"Redução obrigatória na 2ª fase da dosimetria",
+      texto:`São circunstâncias que sempre atenuam a pena: ter o agente confessado espontaneamente, perante a autoridade, a autoria do crime.`,
+      exp:`Fernanda confessou parcialmente — admitiu as transferências, mas alega que era 'adiantamento de herança'. A confissão parcial qualificada: atenua ou não? O STJ exige que seja espontânea e relevante para o processo.`,
+      pars:[{n:"Qualificada",t:"Confissão com negação do crime: o STJ entende que não é confissão para fins de atenuante."},{n:"Colaboração",t:"Devolução de parte dos valores antes da sentença pode configurar reparação do dano (Art. 65,III,b)."}],
+      juris:[{t:"Confissão qualificada não gera atenuante quando o réu nega o elemento subjetivo do tipo.",r:"STJ · AgRg no AREsp 1.743.210/SP"},{t:"Restituição voluntária antes da sentença é circunstância favorável na dosimetria.",r:"STJ · REsp 1.789.012/MG"}],
+      dica:"⚖️ Defesa: devolva o máximo possível antes da sentença — a reparação parcial é sempre atenuante inominada (Art. 66). Acusação: demonstre que a confissão é qualificada (nega o crime)." }
+  ]
+];
+
+// ═══════════════════════════════════════════
+// CASOS — todos os 8
+// ═══════════════════════════════════════════
+const CASOS = [
+  {
+    num:"Caso 01", title:"O Mercado da Madrugada",
+    tags:["Art. 155 §1º CP","Furto Noturno","Processo Penal"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Marcos Aurelio Ferreira, 28 anos</strong>, foi flagrado às 02h47 dentro de um supermercado de bairro após forçar a entrada pelos fundos. Levava uma mochila com 3 frascos de whisky, 2 pedaços de queijo e R$127 em notas do caixa. <strong>Réu primário, sem antecedentes</strong>, declarou que estava desempregado há 4 meses e que sua filha de 2 anos estava com febre. A câmera de segurança registrou tudo.`,
+    agravantes:["Crime praticado durante o repouso noturno (§1º do Art. 155)","Arrombamento da porta dos fundos — rompimento de obstáculo","Subtração de dinheiro em espécie do caixa registrador"],
+    atenuantes:["Réu primário e sem nenhum antecedente criminal","Confissão espontânea na delegacia antes do flagrante","Estado de necessidade putativa — filha doente, situação de miserabilidade"],
+    guia_acusacao:["Quais elementos do Art. 155 §1º estão provados? Como a câmera e o flagrante fecham o dolo?","Por que o estado de necessidade (Art. 24) não deve ser aceito? O que a acusação precisa provar sobre os meios lícitos disponíveis?","Como o rompimento da porta dos fundos se enquadra no §4º,I? Qual jurisprudência do STJ respalda você?","Por que o princípio da insignificância não pode ser aplicado quando há agravante noturna?"],
+    guia_defesa:["Como o estado de necessidade (Art. 24) pode ser construído com os fatos? Quais requisitos você consegue provar?","A porta dos fundos é um 'obstáculo especial' ao bem subtraído (§4º,I) ou um acesso geral?","Como o contexto de miserabilidade pode ser usado na dosimetria do Art. 59 CP?","Quais requisitos do Art. 44 (penas alternativas) estão presentes? Por que a prisão seria desproporcional?"],
+    instancias:[
+      {badge:"Condenado",badgeClass:"ib-cond",tribunal:"2ª Vara Criminal — 1ª Instância",pena:"1 ano e 4 meses",texto:"Reconheceu furto noturno (Art. 155 §1º), afastou insignificância e rompimento de obstáculo. Condenou a 1 ano e 4 meses, convertido em prestação de serviços à comunidade.",ratio:'"O estado de necessidade foi arguido mas não demonstrado. Todavia, a primariedade justifica a conversão."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"Tribunal de Justiça — 2ª Instância",pena:"1 ano",texto:"Afastou a agravante de rompimento de obstáculo — a porta dos fundos não era obstáculo específico à subtração. Pena reduzida para 1 ano. Manteve penas alternativas.",ratio:'"A jurisprudência exige que o obstáculo seja especificamente voltado à proteção do bem subtraído. Porta dos fundos é acesso geral."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça — REsp",pena:"1 ano (mantido)",texto:"Não conheceu do REsp da acusação (Súmula 7). Manteve que a insignificância é afastada pela agravante noturna. Pena alternativa mantida.",ratio:'"Insignificância incompatível com causas de aumento — maior reprovabilidade da conduta."'}
+    ],
+    pontos:["O princípio da insignificância deve ceder quando há agravante noturna, mesmo para réu primário?","A filha doente muda alguma coisa juridicamente — ou apenas moralmente?","Rompimento de obstáculo se aplica a toda porta, ou só ao que protege especificamente o bem?","Pena alternativa para furto qualificado: a defesa pode pedir mesmo com agravante?","Até onde vai o estado de necessidade quando o réu 'poderia ter pedido ajuda'?"],
+    calc: {
+      minBase: 1, maxBase: 5.33, label_min: "1 ano (mín. caput)", label_max: "5a4m (mín. §1º+§4º)",
+      agravantes: [{ label: "Repouso noturno (§1º Art. 155)", efeito: "+1/3 sobre a pena-base", tipo:"agg", mult: 0.333 },{ label: "Rompimento de obstáculo (§4º,I)", efeito: "Qualifica — pena 2–8 anos", tipo:"agg", fixMin: 2, fixMax: 8 }],
+      atenuantes: [{ label: "Confissão espontânea (Art. 65,III,d)", efeito: "Reduz até 1/6", tipo:"ate", mult: -0.166 },{ label: "Réu primário (Art. 59)", efeito: "Favorável na 1ª fase", tipo:"ate", mult: -0.1 },{ label: "Estado de necessidade reconhecido (Art. 24)", efeito: "Absolvição", tipo:"ate", absol: true }],
+      majorantes: [{ label: "Furto privilegiado (Art. 155 §2º)", efeito: "-1/3 a -2/3", tipo:"ate", mult: -0.5 }],
+      veredito: { resultado: "Condenado", pena: "1 ano de reclusão", regime: "Regime aberto → Penas alternativas (Art. 44 CP)", ratio: `"O estado de necessidade não foi demonstrado. A câmera e o flagrante afastam qualquer dúvida sobre o fato. Todavia, a primariedade absoluta, a confissão espontânea e o contexto de vulnerabilidade social justificam a fixação da pena no mínimo legal e a substituição por penas restritivas de direito."`, fundamentacao: `O caso apresenta todos os elementos do tipo: subtração, coisa alheia, dolo. A agravante noturna (§1º) incide pelo horário. O rompimento de obstáculo (§4º,I) <strong>não se sustenta</strong>: a jurisprudência exige que o obstáculo seja específico à proteção do bem subtraído. A insignificância é afastada pela própria existência da agravante do §1º. O <strong>estado de necessidade</strong> exige prova de perigo real e inevitável por meios lícitos — requisito não demonstrado. A dosimetria favorece Marcos: réu primário, confissão espontânea, miserabilidade.`, arts: ["Art. 155 §1º CP", "Art. 44 CP", "Art. 59 CP", "Art. 65,III,d CP"] }
+    }
+  },
+  {
+    num:"Caso 02", title:"A Faca que Voltou",
+    tags:["Art. 25 CP","Legítima Defesa","Homicídio Doloso"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Renata Souza, 34 anos</strong>, esfaqueou o ex-marido <strong>Diego Melo, 37 anos</strong>, que morreu no local. Diego havia invadido a residência de Renata à tarde, brigaram verbalmente e ele saiu. <strong>Duas horas depois</strong>, Renata foi ao apartamento de Diego com uma faca de cozinha. Segundo ela, Diego voltaria e a mataria — havia histórico de violência doméstica em <strong>4 boletins de ocorrência</strong>. Diego estava desarmado quando foi golpeado.`,
+    agravantes:["Diego estava desarmado no momento das facadas","Renata foi ativamente até o local — não houve ataque em curso","Intervalo de 2 horas entre a briga e a ação de Renata"],
+    atenuantes:["4 boletins de ocorrência documentando violência crônica","Laudo de Síndrome da Mulher Agredida (SMA) juntado ao processo","Diego havia invadido a residência de Renata horas antes no mesmo dia"],
+    guia_acusacao:["Diego foi embora há 2 horas — como provar que não havia perigo 'atual ou iminente' no momento das facadas?","A Síndrome da Mulher Agredida (SMA) pode justificar legítima defesa antecipada? Como a acusação refuta isso?","Renata foi ATÉ Diego — como transformar esse deslocamento ativo em prova de premeditação?","Por que as medidas protetivas da Lei Maria da Penha não foram usadas — e como isso enfraquece a tese da 'falta de alternativa'?"],
+    guia_defesa:["Como a SMA altera a percepção de iminência para Renata — e por que o Direito Penal deve considerar essa perspectiva?","Quais os dois caminhos técnicos (legítima defesa real vs. putativa)? Qual é mais sólido juridicamente?","Como os 4 BOs constroem o histórico de violência e fundamentam o 'fundado temor' de Renata?","Se a legítima defesa não for reconhecida, como o homicídio privilegiado (§1º do Art. 121) pode salvar Renata de uma pena máxima?"],
+    instancias:[
+      {badge:"Pronúncia",badgeClass:"ib-cond",tribunal:"Vara do Júri — Pronúncia",pena:"Pronunciada para o júri",texto:"Juiz pronunciou Renata por homicídio doloso. Aplicou in dubio pro societate — a dúvida sobre a excludente é resolvida enviando ao júri.",ratio:'"A dúvida quanto à excludente não impede a pronúncia — é o júri que decide. In dubio pro societate."'},
+      {badge:"Absolvida",badgeClass:"ib-absol",tribunal:"Tribunal do Júri — Plenário",pena:"Absolvida (4x3)",texto:"Júri absolveu Renata por 4 votos a 3. Quesito da legítima defesa putativa acolhido. Os 4 BOs e o laudo de SMA foram determinantes.",ratio:'"A deliberação do júri é soberana — absolvição por 4x3 é válida e não pode ser anulada por simples discordância do resultado."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"Absolvição mantida",texto:"MP recorreu alegando decisão manifestamente contrária às provas. STJ manteve absolvição: versão plausível da defesa foi acolhida.",ratio:'"Anulação do júri exige que a decisão seja manifestamente contrária às provas — não basta versão diversa plausível."'}
+    ],
+    pontos:["A SMA altera o conceito jurídico de 'iminência' da agressão para efeito de legítima defesa?","O histórico de violência e os 4 BOs justificam o 'adiantamento' da legítima defesa?","Renata foi até Diego — isso é premeditação ou desespero?","Por que o júri absolveu por 4x3 se Diego estava desarmado e havia 2 horas de intervalo?","A decisão do júri foi justa — ou o sistema falhou em proteger Diego?"],
+    calc: {
+      minBase: 6, maxBase: 20, label_min: "6 anos (mín. simples)", label_max: "20 anos (máx. simples)",
+      agravantes: [{ label: "Qualificadora — meio cruel (§2º,III)", efeito: "Eleva: 12 a 30 anos", tipo:"agg", fixMin: 12, fixMax: 30 }],
+      atenuantes: [{ label: "Homicídio privilegiado — valor moral (§1º)", efeito: "-1/6 a -1/3", tipo:"ate", mult: -0.25 },{ label: "Legítima defesa putativa reconhecida (Art. 20 §1º)", efeito: "Absolvição ou redução", tipo:"ate", absol: true },{ label: "Violenta emoção logo após injusta provocação", efeito: "-1/6 a -1/3 (§1º)", tipo:"ate", mult: -0.2 }],
+      majorantes: [],
+      veredito: { resultado: "Absolvida", pena: "Absolvição (legítima defesa putativa)", regime: "Sem pena — absolvição plena", ratio: `"A Síndrome da Mulher Agredida, documentada por laudo pericial e corroborada por 4 boletins de ocorrência, altera a percepção temporal e emocional da ré de forma clinicamente reconhecida. O erro de Renata ao supor que Diego voltaria para matá-la é escusável. A decisão do Júri é soberana."`, fundamentacao: `O caso envolve dois enquadramentos: <strong>legítima defesa real</strong> (pela SMA) ou <strong>legítima defesa putativa</strong> (Art. 20 §1º). A putativa é tecnicamente mais sólida: Renata supôs uma situação que, se existisse, tornaria sua ação legítima. O erro foi condicionado por 4 BOs e por diagnóstico clínico reconhecido. O intervalo de 2 horas, por si só, não elimina o medo crônico que a SMA produz.`, arts: ["Art. 20 §1º CP", "Art. 25 CP", "Lei 11.340/2006", "Art. 121 §1º CP"] }
+    }
+  },
+  {
+    num:"Caso 03", title:"O Noivo de Minas",
+    tags:["Art. 171 §5º CP","Estelionato Eletrônico","Concurso de Pessoas"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Felipe Abreu, 31 anos</strong>, criou identidade falsa num app de relacionamentos e durante 8 meses construiu relacionamento afetivo com <strong>Joana Meireles, 52 anos, viúva</strong>. Com histórias de dívidas, Felipe recebeu 23 transferências via PIX totalizando <strong>R$47.000</strong>. Dois cúmplices criaram perfis de suporte (um 'advogado' e um 'tio'). Descoberta pela família, Joana nunca conheceu Felipe pessoalmente.`,
+    agravantes:["Fraude por 8 meses — crime continuado e prolongado","Vítima em situação de vulnerabilidade emocional (viúva recente)","Uso de app de relacionamento e PIX — estelionato eletrônico (§5º)","Envolvimento de 3 réus em concurso de pessoas"],
+    atenuantes:["Vítima tem 52 anos — não é idosa para fins do §3º do Art. 171","Felipe confessou parcialmente os fatos","Não houve violência ou ameaça à vítima"],
+    guia_acusacao:["Como o §5º do Art. 171 (estelionato eletrônico) se aplica ao uso de app de relacionamento + PIX?","A vulnerabilidade emocional de Joana (viúva recente) enquadra o §3º, mesmo ela tendo 52 anos — como argumentar?","Como diferenciar coautoria de participação de menor importância (Art. 29 §1º) para os dois cúmplices?","Os 23 PIX são crimes autônomos ou crime continuado (Art. 71)? Qual estratégia maximiza a pena?"],
+    guia_defesa:["O §3º exige 60 anos — e Joana tem 52. Como usar essa diferença técnica para afastar a majorante?","Os dois cúmplices nunca interagiram com Joana. Como configurar participação de menor importância (Art. 29 §1º)?","Crime continuado (Art. 71) é favorável à defesa — como argumentar pelos 23 PIX como ato único continuado?","A confissão de Felipe pode ser usada como atenuante — como ela se encaixa na dosimetria?"],
+    instancias:[
+      {badge:"Condenado",badgeClass:"ib-cond",tribunal:"4ª Vara Criminal — 1ª Instância",pena:"Felipe: 4 anos e 8 meses",texto:"Estelionato + §5º (eletrônico) + crime continuado. Afastou §3º (Joana tem 52 anos). Felipe: 4a8m, regime semiaberto. Cúmplices: 2a6m com participação de menor importância.",ratio:'"App de relacionamento e PIX configuram meio eletrônico do §5º. Joana, embora vulnerável emocionalmente, não se enquadra no conceito etário do §3º."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"STJ — Habeas Corpus",pena:"Mantido",texto:"STJ manteve §5º: app de relacionamento + PIX é meio eletrônico. Confirmou crime continuado. Afastou §3º novamente. Regime semiaberto mantido.",ratio:'"O §5º alcança qualquer meio eletrônico — incluindo aplicativos de relacionamento."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"STJ — REsp Acusação",pena:"Mantido",texto:"A acusação tentou restaurar o §3º por analogia. STJ rejeitou: analogia in malam partem é vedada no direito penal.",ratio:'"O Estatuto do Idoso fixa 60 anos. Joana tem 52. Não há como ampliar a majorante sem violação do princípio da legalidade estrita."'}
+    ],
+    pontos:["Vulnerabilidade emocional (viuvez, luto) deve ser equiparada à vulnerabilidade legal do Estatuto do Idoso?","A vítima que não verifica a identidade do 'namorado' virtual tem responsabilidade — isso importa para o Direito Penal?","O §5º foi acertadamente aplicado? App de relacionamento é 'meio eletrônico'?","Os três réus merecem penas iguais? Como individualizar quando o 'suporte' não interagiu com a vítima?","Tornozeleira vs. prisão: qual a função real da pena aqui?"],
+    calc: {
+      minBase: 1, maxBase: 5, label_min: "1 ano (mín. caput)", label_max: "5 anos (máx. caput)",
+      agravantes: [{ label: "Estelionato eletrônico §5º (app + PIX)", efeito: "+1/3 a +2/3", tipo:"agg", mult: 0.5 },{ label: "Vulnerabilidade da vítima §3º (60+)", efeito: "+1/3 (se reconhecido)", tipo:"agg", mult: 0.333 }],
+      atenuantes: [{ label: "Confissão parcial (Art. 65,III,d)", efeito: "Reduz até 1/6", tipo:"ate", mult: -0.166 },{ label: "Participação de menor importância (Art. 29 §1º)", efeito: "-1/6 a -1/3 (cúmplices)", tipo:"ate", mult: -0.25 }],
+      majorantes: [{ label: "Crime continuado (Art. 71 — 23 atos)", efeito: "+1/6 a +2/3", tipo:"agg", mult: 0.5 }],
+      veredito: { resultado: "Condenado", pena: "4 anos e 8 meses (Felipe)", regime: "Regime semiaberto", ratio: `"O app de relacionamento combinado com PIX configura inequivocamente 'dispositivo informático ou eletrônico' do §5º. O §3º não se aplica pois Joana tem 52 anos — analogia in malam partem é vedada."`, fundamentacao: `O estelionato está tipificado: fraude + indução em erro + vantagem ilícita (R$47.000). O <strong>§5º é aplicável</strong>: app de relacionamento e PIX são dispositivos eletrônicos — o STJ pacificou. O <strong>§3º não se aplica</strong>: Joana tem 52 anos. O crime continuado (Art. 71) é reconhecido: mesmo plano criminoso, mesma vítima. Para os cúmplices, a participação de menor importância (Art. 29 §1º) é cabível — eles nunca interagiram com Joana.`, arts: ["Art. 171 §5º CP", "Art. 71 CP", "Art. 29 §1º CP", "Art. 65,III,d CP"] }
+    }
+  },
+  {
+    num:"Caso 04", title:"A Curva das 23h",
+    tags:["Art. 302 CTB","Homicídio Culposo","Omissão de Socorro"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Carla Beatriz Nunes, 26 anos</strong>, professora, dirigia à noite quando atropelou <strong>Silvio Ramos, 68 anos</strong>, que atravessava fora da faixa. Silvio faleceu 3 dias depois. Carla parou, viu Silvio caído, <strong>voltou ao carro e fugiu</strong>. Uma testemunha fotografou a placa. Laudo indica velocidade dentro do limite. Câmera mostra Silvio atravessando de preto, no escuro. Bafômetro: <strong>0,18mg/L</strong> (abaixo do limite criminal de 0,33mg/L).`,
+    agravantes:["Omissão de socorro após o acidente — fuga do local (Art. 302 §1º,III,CTB)","Álcool acima do limite administrativo (0,05mg/L), mesmo abaixo do penal","Vítima idosa (68 anos)"],
+    atenuantes:["Velocidade dentro do limite legal — sem imprudência comprovada ao dirigir","Vítima atravessou fora da faixa, de preto, à noite — concorrência de culpa","Ré primária; entregou-se à polícia no dia seguinte; estado de pânico documentado"],
+    guia_acusacao:["Como provar a culpa de Carla se a velocidade estava no limite? A culpa vem do atropelamento ou da omissão — qual é mais sólida?","O bafômetro de 0,18mg/L não configura crime, mas como usá-lo como circunstância desfavorável na dosimetria (Art. 59 CP)?","Carla viu Silvio e fugiu — como transformar isso em prova de dolo eventual na omissão?","O argumento do 'pânico' da defesa: por que o Direito Penal não o aceita como excludente — e o que a acusação deve responder sobre o SAMU anônimo?"],
+    guia_defesa:["Como separar o atropelamento (sem culpa de Carla) da omissão (onde ela errou)? Por que atacar os dois momentos separadamente é estratégico?","A culpa concorrente de Silvio pode ser atenuante inominada (Art. 66 CP) — como construir esse argumento?","O estado de pânico pode ser arguido como inexigibilidade de conduta diversa (Art. 22 CP) ou atenuante inominada? Qual enquadramento técnico é melhor?","Quais requisitos do Art. 44 (penas alternativas) estão presentes? Por que Carla não deveria ir para a prisão efetiva?"],
+    instancias:[
+      {badge:"Condenada",badgeClass:"ib-cond",tribunal:"1ª Vara Criminal — 1ª Instância",pena:"3 anos e 6 meses",texto:"Condenada por homicídio culposo no trânsito com omissão de socorro (Art. 302 §1º,III,CTB): 3a6m, regime aberto, suspensão da CNH por 5 anos. Aumento de 1/3 pela omissão. Álcool como circunstância desfavorável.",ratio:'"A fuga foi voluntária — Carla viu a vítima, parou e decidiu não socorrer. Pânico não constitui excludente — havia escolha possível."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"Tribunal de Justiça — Apelação",pena:"2 anos e 8 meses",texto:"TJ reconheceu culpa concorrente de Silvio como atenuante inominada (Art. 66 CP): pena reduzida para 2a8m. Manteve omissão de socorro e suspensão da CNH. Substituiu por prestação de serviços.",ratio:'"Culpa concorrente da vítima não afasta o crime mas atenua a reprovabilidade."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"2a8m (mantido)",texto:"STJ manteve. Afastou nemo tenetur quanto à omissão: dever de socorro pode ser cumprido anonimamente. Suspensão da CNH por 5 anos mantida.",ratio:'"Dever de prestar socorro não viola nemo tenetur — o réu pode acionar o SAMU sem identificar-se."'}
+    ],
+    pontos:["A omissão de socorro como agravante ou crime autônomo — há diferença prática?","O álcool abaixo do limite penal pode entrar na dosimetria como circunstância desfavorável?","A culpa concorrente de Silvio pode reduzir ou afastar a responsabilidade de Carla?","O nemo tenetur protege quem foge do acidente? Onde está o limite?","Se Silvio tivesse sobrevivido, Carla ainda responderia pela omissão?"],
+    calc: {
+      minBase: 2, maxBase: 4, label_min: "2 anos (mín.)", label_max: "4 anos (máx.)",
+      agravantes: [{ label: "Omissão de socorro (Art. 302 §1º,III)", efeito: "+1/3 a +1/2", tipo:"agg", mult: 0.4 },{ label: "Álcool acima do limite administrativo", efeito: "Circunstância desfavorável (Art. 59)", tipo:"agg", mult: 0.1 }],
+      atenuantes: [{ label: "Réu primária — entregou-se à polícia", efeito: "Favorável na 1ª fase", tipo:"ate", mult: -0.1 },{ label: "Culpa concorrente da vítima (Art. 66 CP)", efeito: "Atenuante inominada", tipo:"ate", mult: -0.166 },{ label: "Pânico documentado (Art. 66 — inominada)", efeito: "Pode atenuar", tipo:"ate", mult: -0.1 }],
+      majorantes: [],
+      veredito: { resultado: "Condenada", pena: "2 anos e 8 meses", regime: "Regime aberto → Prestação de serviços à comunidade", ratio: `"A culpabilidade de Carla concentra-se na omissão — não no atropelamento em si, que ocorreu em condições adequadas de direção. A culpa concorrente de Silvio atenua a reprovabilidade. O pânico, embora não seja excludente, é circunstância relevante."`, fundamentacao: `A culpa de Carla não está no atropelamento — velocidade no limite, vítima irregular, câmera confirma. A <strong>culpa está na omissão</strong>: ela viu Silvio caído e fugiu. O dever de socorro (Art. 302 §1º,III CTB) é claro e o STJ afastou expressamente o nemo tenetur. A culpa concorrente de Silvio justificou a redução da pena em segunda instância. O álcool (0,18mg/L) está abaixo do limite penal, mas entra como circunstância desfavorável no Art. 59 CP.`, arts: ["Art. 302 §1º,III CTB", "Art. 66 CP", "Art. 59 CP", "Art. 44 CP"] }
+    }
+  },
+  {
+    num:"Caso 05", title:"Nunca Vai Ser Livre",
+    tags:["Art. 147-A CP","Stalking","Lei Maria da Penha"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Bruno Castilho, 33 anos</strong>, terminou o relacionamento de 2 anos com <strong>Larissa Vidal, 29 anos</strong>. Nos 6 meses seguintes: enviou <strong>847 mensagens</strong> no WhatsApp, apareceu 11 vezes na frente do trabalho de Larissa, criou perfis falsos para contornar bloqueios, enviou flores à família com bilhetes <em>"ela sempre será minha"</em>, e disse em ligação: <em>"você vai me ver onde menos espera."</em> Larissa desenvolveu ansiedade generalizada e deixou o emprego. Laudo médico juntado.`,
+    agravantes:["Conduta reiterada e sistemática por 6 meses (Art. 147-A CP)","Uso de meios digitais para burlar bloqueios — artifício deliberado","Dano psicológico grave documentado — vítima deixou o emprego","Lei Maria da Penha aplicável — contexto de violência de gênero"],
+    atenuantes:["Bruno não teve contato físico com Larissa em nenhum momento","Réu primário, sem antecedentes criminais","Laudo psiquiátrico: transtorno de apego ansioso — quadro tratável"],
+    guia_acusacao:["O que configura o crime de stalking (Art. 147-A) — como os 847 mensagens, 11 aparições e perfis falsos preenchem cada elemento do tipo penal?","A frase 'vai me ver onde menos espera' configura ameaça (Art. 147) em concurso material com o stalking, ou deve ser absorvida (consunção)?","Como provar o 'dano psicológico' exigido pelo tipo a partir do laudo de Larissa e da demissão?","Como a Lei Maria da Penha (+1/3) incide no caso e por que ex-namorado de 2 anos se enquadra no Art. 5º,III?"],
+    guia_defesa:["Como diferenciar 'amor doentio excessivo' de stalking criminoso? Onde o Art. 147-A traça a linha?","A frase 'vai me ver onde menos espera' em contexto de desespero emocional é ameaça objetiva (Art. 147 CP)?","O laudo de transtorno de apego ansioso pode sustentar semi-imputabilidade (Art. 26 §único)? O que o laudo precisaria demonstrar?","Tratamento psiquiátrico como substituto da pena (Art. 98 CP): como argumentar que é mais eficaz para Bruno e para proteger Larissa?"],
+    instancias:[
+      {badge:"Condenado",badgeClass:"ib-cond",tribunal:"Vara de Violência Doméstica — 1ª Instância",pena:"1 ano e 4 meses",texto:"Condenado: stalking (Art. 147-A) + ameaça (Art. 147) em concurso material + majorante LMP (+1/3). Total: 1a4m, regime aberto. Substituído por: tratamento psiquiátrico obrigatório, proibição de contato, prestação de serviços.",ratio:'"847 mensagens, 11 aparições e perfis falsos demonstram sistemática de perseguição que extrapola o sofrimento amoroso."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"Tribunal de Justiça — Apelação",pena:"10 meses",texto:"TJ afastou concurso material — ameaça absorvida pelo stalking (princípio da consunção). Manteve LMP. Reduziu para 10 meses com tratamento psiquiátrico e monitoramento eletrônico.",ratio:'"Ameaça inserida em padrão de perseguição é absorvida pelo stalking pelo princípio da consunção."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"10 meses (mantido)",texto:"STJ negou acusação (restaurar concurso) e defesa (semi-imputabilidade). Laudo não alcança nível exigido pelo Art. 26 §único. Monitoramento eletrônico mantido.",ratio:'"Transtorno de apego ansioso não elimina a capacidade de entendimento — laudos devem indicar comprometimento concreto da autodeterminação."'}
+    ],
+    pontos:["Onde está a linha entre 'amor doentio' e crime de stalking? Quantidade de mensagens define?","'Vai me ver onde menos espera' é ameaça real ou desabafo emocional? Contexto importa?","Transtorno de apego ansioso pode levar à semi-imputabilidade — o que o laudo precisa mostrar?","Tratamento psiquiátrico como pena: é mais justo? Protege Larissa?","A Lei Maria da Penha se aplica a ex-namorado? Qual o critério para 'violência doméstica'?"],
+    calc: {
+      minBase: 0.5, maxBase: 2, label_min: "6 meses (mín.)", label_max: "2 anos (máx.)",
+      agravantes: [{ label: "Majorante LMP — vítima mulher (Art. 40 LMP)", efeito: "+1/3", tipo:"agg", mult: 0.333 },{ label: "Ameaça em concurso material (Art. 147 CP)", efeito: "+1 a 6 meses (se aplicado)", tipo:"agg", mult: 0.2 }],
+      atenuantes: [{ label: "Réu primário, sem antecedentes", efeito: "Favorável na 1ª fase", tipo:"ate", mult: -0.1 },{ label: "Sem contato físico com a vítima", efeito: "Circunstância favorável (Art. 59)", tipo:"ate", mult: -0.1 },{ label: "Semi-imputabilidade reconhecida (Art. 26 §único)", efeito: "-1/3 a -2/3", tipo:"ate", mult: -0.5 }],
+      majorantes: [{ label: "Consunção — ameaça absorvida pelo stalking", efeito: "Afasta concurso material", tipo:"ate", mult: -0.15 }],
+      veredito: { resultado: "Condenado", pena: "10 meses", regime: "Regime aberto → Tratamento psiquiátrico + monitoramento eletrônico", ratio: `"847 mensagens, 11 aparições físicas e perfis falsos criados para burlar bloqueios demonstram padrão sistemático de perseguição. A ameaça é absorvida pelo stalking (consunção). A semi-imputabilidade não ficou demonstrada."`, fundamentacao: `O stalking do Art. 147-A está inequivocamente demonstrado: reiteração + ameaça à integridade psicológica + restrição da liberdade de Larissa. A Lei Maria da Penha incide: 2 anos de namoro configura relação íntima de afeto (Art. 5º,III LMP). O TJ aplicou o princípio da consunção corretamente. A <strong>semi-imputabilidade</strong> foi rejeitada pelo STJ: o laudo diagnosticou transtorno de apego ansioso mas não demonstrou comprometimento concreto da autodeterminação.`, arts: ["Art. 147-A CP", "Art. 40 LMP", "Art. 44 CP", "Art. 98 CP"] }
+    }
+  },
+  // CASO 06: O Pai de Aluguel
+  {
+    num:"Caso 06", title:"O Pai de Aluguel",
+    tags:["Art. 168-A CP","Crime Tributário","Concurso Material"],
+    tagClasses:["tag-gold","tag-red","tag-purple"],
+    body:`<strong>Roberto Alves, 47 anos</strong>, sócio-proprietário de uma confecção com 38 funcionários, passou 14 meses retendo as contribuições previdenciárias dos empregados mas não as repassando ao INSS — total de <strong>R$312.000</strong>. Ao mesmo tempo, importou matéria-prima têxtil da China com documentação falsa, subdeclarando o valor em R$180.000. A empresa estava em recuperação judicial. Roberto tem 3 filhos menores e é o único provedor da família. Sem antecedentes.`,
+    agravantes:["14 meses de não-repasse — crime continuado e prolongado","Documentação fiscal falsificada — indício de crime doloso","Valor vultoso — R$312.000 previdenciário + R$180.000 de descaminho"],
+    atenuantes:["Empresa em recuperação judicial — contexto de crise financeira grave","Réu primário, único provedor de família com 3 filhos","Pagou R$80.000 antes do início da ação penal — extinção parcial"],
+    guia_acusacao:["Por que a crise financeira da empresa não é excludente de culpabilidade no Art. 168-A? O dolo é a mera ciência do não-repasse.","Como o pagamento parcial (R$80.000 de R$312.000) não extingue a punibilidade — o STJ exige pagamento integral.","O uso de documentação falsa para o descaminho configura contrabando ou descaminho? Qual a diferença prática?","Como construir o concurso material entre apropriação indébita previdenciária e descaminho?"],
+    guia_defesa:["O parcelamento junto à Receita Federal antes da denúncia suspende a ação penal — como provar que o REFIS foi aderido em tempo?","A recuperação judicial cria alguma excludente de exigibilidade de conduta diversa (Art. 22)? É cabível?","A documentação falsa no descaminho é crime-meio absorvido pelo crime-fim — como defender pela consunção?","Roberto tem 3 filhos menores: como usar o Art. 59 (circunstâncias pessoais favoráveis) na dosimetria?"],
+    instancias:[
+      {badge:"Condenado",badgeClass:"ib-cond",tribunal:"2ª Vara Federal Criminal — 1ª Instância",pena:"5 anos e 2 meses (total)",texto:"Roberto condenado: Art. 168-A (2a6m) + Art. 334-A contrabando (3 anos) em concurso material = 5a6m. Falsidade absorvida como crime-meio. Regime semiaberto. Parcelamento reduziu parcialmente a pena-base.",ratio:'"A recuperação judicial não afasta o dolo na apropriação previdenciária. O pagamento parcial é atenuante, não extinção da punibilidade."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"TRF — Tribunal Regional Federal",pena:"3 anos e 10 meses",texto:"TRF reclassificou de contrabando para descaminho (Art. 334): pena caiu de 3 para 2 anos. Reconheceu atenuante inominada pela recuperação judicial. Total: 3a10m, regime aberto.",ratio:'"A mercadoria têxtil não é proibida — apenas os tributos não foram pagos. Descaminho, não contrabando."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"3a10m (mantido)",texto:"STJ manteve. Negou extinção da punibilidade — parcelamento foi após a denúncia. Manteve descaminho (não contrabando). Permitiu progressão imediata para regime aberto.",ratio:'"O parcelamento posterior à denúncia não extingue a punibilidade — apenas suspende enquanto vigente."'}
+    ],
+    pontos:["A crise financeira real pode ser excludente de culpabilidade em crimes previdenciários?","Descaminho vs. contrabando: a natureza da mercadoria define o crime ou a forma de ingresso?","O parcelamento no REFIS deve suspender ou extinguir a ação penal — antes ou depois da denúncia?","Pena para crime de colarinho branco: deve ser mais severa para compensar a dificuldade de detecção?","A presença de filhos menores como circunstância pessoal favorável — tem peso real na dosimetria?"],
+    calc: {
+      minBase: 2, maxBase: 5, label_min: "2 anos (mín. Art. 168-A)", label_max: "5 anos (máx. Art. 168-A)",
+      agravantes: [{ label: "Contrabando (Art. 334-A) em concurso material", efeito: "+2 a 5 anos somados", tipo:"agg", mult: 0.6 },{ label: "Falsidade documental para descaminho", efeito: "Crime-meio (pode ser absorvido)", tipo:"agg", mult: 0.15 }],
+      atenuantes: [{ label: "Pagamento parcial antes da denúncia", efeito: "Atenuante — não extingue punibilidade", tipo:"ate", mult: -0.166 },{ label: "Réu primário + recuperação judicial", efeito: "Favorável na 1ª fase (Art. 59)", tipo:"ate", mult: -0.15 },{ label: "Parcelamento integral antes da denúncia", efeito: "Extinção da punibilidade (§2º Art. 168-A)", tipo:"ate", absol: true }],
+      majorantes: [{ label: "Reclassificação para descaminho (Art. 334)", efeito: "-1 a -2 anos (pena menor)", tipo:"ate", mult: -0.3 }],
+      veredito: { resultado: "Condenado", pena: "3 anos e 10 meses (total)", regime: "Regime aberto → Progressão imediata", ratio: `"A crise financeira não afasta o dolo. O pagamento parcial é atenuante, não extinção. A reclassificação para descaminho foi acertada — mercadoria têxtil não é proibida. Parcelamento posterior à denúncia não extingue a punibilidade."`, fundamentacao: `A <strong>apropriação previdenciária</strong> é clara: Roberto retinha e sabia que não repassava. A recuperação judicial é circunstância pessoal relevante (Art. 59), não excludente de ilicitude. A distinção entre contrabando e descaminho foi corretamente resolvida pelo TRF: a mercadoria têxtil não é proibida, logo é descaminho. A <strong>falsidade documental</strong> foi corretamente absorvida como crime-meio. O parcelamento após a denúncia só suspende, não extingue a punibilidade.`, arts: ["Art. 168-A CP", "Art. 334 CP", "Art. 71 CP", "Art. 59 CP"] }
+    }
+  },
+  // CASO 07: A Testemunha Que Sumiu
+  {
+    num:"Caso 07", title:"A Testemunha Que Sumiu",
+    tags:["Art. 342 CP","Falso Testemunho","Fraude Processual"],
+    tagClasses:["tag-gold","tag-red","tag-blue"],
+    body:`<strong>Marina Sousa, 26 anos</strong>, depôs como testemunha em processo de inventário, afirmando ter presenciado a assinatura do testamento da falecida — quando na verdade estava em outra cidade, comprovado por registros de hotel. O testamento favorecia o irmão de seu namorado, <strong>Ciro Leal, 35 anos</strong>. Ciro havia presenteado Marina com uma viagem internacional um mês antes do depoimento. Marina afirma que Ciro a pressionou, dizendo que "terminaria tudo" se ela não depusesse. Ela se retratou 4 meses após o depoimento, mas após a sentença no inventário.`,
+    agravantes:["Depoimento prestado sob compromisso — falso testemunho com plena consciência","Retratação apenas após a sentença — sem extinção da punibilidade","Presente recebido (viagem) configura suborno — possível majorante do §1º"],
+    atenuantes:["Marina se retratou voluntariamente, ainda que após a sentença","Pressão emocional do namorado documentada — possível coação (Art. 22)","Réu primária, 26 anos, sem antecedentes"],
+    guia_acusacao:["A retratação de Marina veio após a sentença — por que o Art. 342 §2º não extingue a punibilidade?","A viagem presenteada por Ciro configura suborno (corrupção ativa de testemunha / Art. 342 §1º)? Como provar o nexo?","Ciro pode responder por fraude processual (Art. 347) em concurso com corrupção ativa de testemunha?","Como separar as condutas de Marina e Ciro — e por que é estratégico para a acusação pedir penas distintas?"],
+    guia_defesa:["A coação de Ciro ('terminaria tudo') é irresistível (Art. 22 CP) ou apenas resistível (atenuante)? Que provas sustentam?","A retratação voluntária, mesmo após a sentença, demonstra boa-fé — como usá-la na dosimetria (Art. 59)?","Como diferenciar a conduta de Marina (coagida) da de Ciro (idealizador) para obter tratamento penal mais favorável?","A viagem como 'suborno': ela sabia que era condicionada ao depoimento? Isso importa para o dolo?"],
+    instancias:[
+      {badge:"Condenada",badgeClass:"ib-cond",tribunal:"Vara de Crimes contra a Fé Pública — 1ª Instância",pena:"Marina: 2 anos / Ciro: 4 anos",texto:"Marina: Art. 342 caput, 2 anos, regime aberto, prestação de serviços. Ciro: Art. 347 (fraude processual) + Art. 342 §1º (suborno de testemunha) = 4 anos, regime semiaberto.",ratio:'"A retratação foi posterior à sentença — não extingue a punibilidade. A viagem como suborno ficou provada pelo nexo temporal: 30 dias antes do depoimento."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"Tribunal de Justiça — Apelação",pena:"Marina: 1 ano e 4 meses",texto:"TJ reconheceu coação resistível de Ciro como atenuante para Marina — pena reduzida para 1a4m. Manteve Ciro em 4 anos. Marina ficou em regime aberto com tornozeleira.",ratio:'"A coação pelo risco de término do relacionamento é resistível, não irresistível — mas é atenuante real para fins da pena de Marina."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"Ambos mantidos",texto:"STJ manteve ambas as condenações. Negou coação irresistível: ameaça de término de namoro não alcança o nível exigido pelo Art. 22. Manteve suborno como majorante para Ciro.",ratio:'"Ameaça de término de relacionamento não configura coação irresistível para fins penais — o mal prometido não é grave o suficiente para eliminar a autodeterminação."'}
+    ],
+    pontos:["A retratação após a sentença deve ter algum efeito na pena — mesmo sem extinguir a punibilidade?","Ameaça de término de relacionamento pode ser coação irresistível? Onde está o limite emocional vs. jurídico?","Ciro deu a viagem 30 dias antes — isso é prova de suborno ou mera coincidência?","Como o Direito Penal trata quem é 'coagido pelo amor'?","A sentença do inventário deve ser anulada automaticamente com a condenação por falso testemunho?"],
+    calc: {
+      minBase: 2, maxBase: 4, label_min: "2 anos (mín. Art. 342)", label_max: "4 anos (máx. Art. 342)",
+      agravantes: [{ label: "Suborno — majorante §1º Art. 342 (Ciro)", efeito: "Pena de 3 a 6 anos", tipo:"agg", fixMin: 3, fixMax: 6 },{ label: "Retratação após sentença — sem extinção da punibilidade", efeito: "Agravante inominada", tipo:"agg", mult: 0.1 }],
+      atenuantes: [{ label: "Retratação voluntária (Art. 65,III,b)", efeito: "Atenuante — demonstra boa-fé", tipo:"ate", mult: -0.166 },{ label: "Coação resistível (Art. 65 — inominada)", efeito: "Reduz pena de Marina", tipo:"ate", mult: -0.2 },{ label: "Coação irresistível reconhecida (Art. 22)", efeito: "Absolvição de Marina", tipo:"ate", absol: true }],
+      majorantes: [],
+      veredito: { resultado: "Condenada", pena: "Marina: 1a4m / Ciro: 4 anos", regime: "Marina: regime aberto. Ciro: semiaberto", ratio: `"A ameaça de término do relacionamento é coação resistível, não irresistível — mas é atenuante real. A viagem 30 dias antes do depoimento configura o nexo para o suborno do §1º. A retratação posterior à sentença não extingue, mas atenua."`, fundamentacao: `O <strong>falso testemunho</strong> está consumado: Marina afirmou estar presente quando comprovadamente não estava. A retratação veio após a sentença — o Art. 342 §2º exige que seja antes. A <strong>coação</strong>: ameaça de término de namoro é resistível segundo o STJ — Marina tinha autodeterminação. Ciro responde por <strong>fraude processual</strong> (Art. 347) + majorante do suborno (§1º Art. 342).`, arts: ["Art. 342 CP", "Art. 347 CP", "Art. 22 CP", "Art. 65 CP"] }
+    }
+  },
+  // CASO 08: A Herança Envenenada
+  {
+    num:"Caso 08", title:"A Herança Envenenada",
+    tags:["Art. 168 §1º,II CP","Apropriação Indébita","Crime de Inventário"],
+    tagClasses:["tag-gold","tag-red","tag-purple"],
+    body:`<strong>Fernanda Rezende, 41 anos</strong>, foi nomeada inventariante da herança da mãe falecida — patrimônio estimado em R$1,2 milhão (três imóveis e investimentos). Durante 18 meses de processo, desviou <strong>R$340.000</strong> em transferências para contas próprias, apresentando recibos falsos ao juízo. Sua irmã <strong>Patrícia, 38 anos</strong>, descobriu o desvio ao contratar perícia contábil independente. Fernanda admitiu as transferências, alegando que era 'adiantamento de herança' combinado verbalmente com a mãe antes da morte. Sem antecedentes. Mãe solteira de um filho de 8 anos.`,
+    agravantes:["Cargo de inventariante — qualificadora automática do Art. 168 §1º,II","R$340.000 desviados em 18 meses — conduta sistemática e prolongada","Recibos falsos apresentados ao juízo — fraude processual em paralelo","Prejudicou o inventário da própria mãe e a irmã herdeira"],
+    atenuantes:["Confissão parcial — admitiu as transferências, negou o dolo criminoso","Mãe solteira de filho de 8 anos — circunstância pessoal favorável","Alega acordo verbal com a mãe — difícil de provar ou refutar","Sem antecedentes criminais"],
+    guia_acusacao:["A qualificadora do Art. 168 §1º,II é automática para inventariante — como provar a inversão do animus domini?","Os recibos falsos apresentados ao juízo configuram fraude processual (Art. 347) em concurso material?","A alegação de 'adiantamento verbal' não tem prova e não afasta o dolo — como argumentar juridicamente?","Como a confissão qualificada ('admito mas nego o crime') não gera atenuante — e o que o STJ diz sobre isso?"],
+    guia_defesa:["O 'adiantamento de herança' combinado verbalmente pode ser arguido como exercício de direito aparente — como construir esse argumento?","A confissão parcial pode ser apresentada como colaboração com a Justiça para fins de dosimetria (Art. 59)?","A restituição parcial antes da sentença (se houver) pode extinguir ou reduzir significativamente a pena?","Filho de 8 anos como única referência parental: como usar isso na dosimetria para evitar prisão efetiva?"],
+    instancias:[
+      {badge:"Condenada",badgeClass:"ib-cond",tribunal:"Vara de Família e Sucessões — 1ª Instância",pena:"3 anos e 6 meses",texto:"Condenada: Art. 168 §1º,II (qualificada pela inventariante) + Art. 347 (fraude processual com documentos falsos) em concurso material. Total: 3a6m. Regime aberto + tornozeleira. Obrigação de restituir R$340.000.",ratio:'"A qualificadora do §1º,II é automática. O animus domini ficou demonstrado pelo padrão sistemático de transferências e recibos falsos."'},
+      {badge:"Pena reduzida",badgeClass:"ib-redu",tribunal:"Tribunal de Justiça — Apelação",pena:"2 anos e 4 meses",texto:"TJ afastou a fraude processual como crime autônomo — os recibos falsos foram crime-meio para a apropriação. Concurso afastado. Reconheceu a confissão como atenuante. Total: 2a4m, regime aberto, substituição por prestação de serviços.",ratio:'"Os recibos falsos foram instrumental da apropriação — crime-meio absorvido pelo crime-fim. Consunção aplicada."'},
+      {badge:"STJ mantém",badgeClass:"ib-mant",tribunal:"Superior Tribunal de Justiça",pena:"2a4m (mantido)",texto:"STJ manteve. Negou extinção por suposto 'adiantamento': não há prova documental do acordo. Manteve qualificadora da inventariante. Substituição por penas alternativas mantida dado o filho menor.",ratio:'"Acordo verbal de adiantamento sem prova documental não afasta o dolo da apropriação indébita. A qualificadora §1º,II independe de intenção adicional."'}
+    ],
+    pontos:["O 'adiantamento de herança combinado verbalmente' pode ser um argumento jurídico válido ou é apenas narrativa?","A qualificadora de inventariante é automática — ou precisa provar algo além do cargo?","Os recibos falsos são crime autônomo (fraude processual) ou crime-meio absorvido?","A presença de filho menor deve influenciar a escolha entre regime aberto e penas alternativas?","O Direito Penal deve intervir em conflitos de inventário, ou seria matéria civil?"],
+    calc: {
+      minBase: 1, maxBase: 4, label_min: "1 ano (mín. caput)", label_max: "4 anos (máx. caput)",
+      agravantes: [{ label: "Qualificadora Art. 168 §1º,II — inventariante", efeito: "+1/3 automático", tipo:"agg", mult: 0.333 },{ label: "Fraude processual (Art. 347) em concurso material", efeito: "+3 meses a 2 anos somados", tipo:"agg", mult: 0.25 }],
+      atenuantes: [{ label: "Confissão parcial (Art. 65,III,d)", efeito: "Atenuante — se considerada espontânea", tipo:"ate", mult: -0.1 },{ label: "Réu primária + filho menor (Art. 59)", efeito: "Circunstâncias pessoais favoráveis", tipo:"ate", mult: -0.15 },{ label: "Restituição integral antes da sentença", efeito: "Reparação do dano — atenuante inominada", tipo:"ate", mult: -0.3 }],
+      majorantes: [{ label: "Consunção — recibos absorvidos (Art. 347 afastado)", efeito: "Remove concurso material", tipo:"ate", mult: -0.2 }],
+      veredito: { resultado: "Condenada", pena: "2 anos e 4 meses", regime: "Regime aberto → Penas alternativas (Art. 44 CP)", ratio: `"A qualificadora §1º,II é automática — Fernanda era inventariante nomeada judicialmente. O acordo verbal não afasta o dolo sem prova documental. Os recibos falsos são crime-meio absorvido pela apropriação. Filho menor e primariedade justificam substituição."`, fundamentacao: `A <strong>apropriação indébita qualificada</strong> está demonstrada: Fernanda tinha posse legítima dos bens (como inventariante) e inverteu o animus domini ao desviar R$340.000 sistematicamente. A qualificadora do §1º,II é automática — ela era inventariante nomeada. O 'adiantamento verbal' não tem prova documental e não afasta o dolo. A <strong>fraude processual</strong> foi corretamente absorvida pelo TJ como crime-meio. O filho menor de 8 anos e a primariedade justificam a substituição por penas alternativas.`, arts: ["Art. 168 §1º,II CP", "Art. 44 CP", "Art. 65 CP", "Art. 59 CP"] }
+    }
+  }
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let casoIdx = 0;
+let role = 'acusacao';
+let scoreAcu = 0;
+let scoreDef = 0;
+let checkedArgs = new Set();
+let checkedAgg = new Set();
+let checkedAte = new Set();
+let checkedMaj = new Set();
+// Notas por caso (array de strings)
+const notesStore = {};
+const juizNotesStore = {};
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function initHome() {
+  const grid = document.getElementById('home-case-grid');
+  grid.innerHTML = CASOS.map((c, i) => `
+    <div class="case-btn ${i === casoIdx ? 'active' : ''}" onclick="selectCase(${i})">
+      <span class="case-btn-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="case-btn-name">${c.title}</span>
+    </div>
+  `).join('');
+}
+
+function selectCase(i) {
+  casoIdx = i;
+  document.querySelectorAll('.case-btn').forEach((b, j) => b.classList.toggle('active', j === i));
+}
+
+function pickRandom() {
+  let next;
+  do { next = Math.floor(Math.random() * CASOS.length); } while (next === casoIdx && CASOS.length > 1);
+  selectCase(next);
+}
+
+function startGame(r) {
+  role = r;
+  checkedArgs = new Set();
+  checkedAgg = new Set();
+  checkedAte = new Set();
+  checkedMaj = new Set();
+
+  if (r === 'juiz') {
+    buildJuiz();
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-juiz').classList.add('active');
+    showTab('juiz','caso');
+  } else {
+    buildGame();
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-game').classList.add('active');
+    showTab('player','caso');
+  }
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  document.getElementById('screen-game').classList.remove('active');
+  document.getElementById('screen-juiz').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════
+function showTab(context, tab) {
+  const prefix = context === 'player' ? 'player' : 'juiz';
+  document.querySelectorAll(`#${prefix}-tab-bar .tab-btn`).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  document.querySelectorAll(`[id^="${prefix}-tab-"]`).forEach(panel => {
+    const panelTab = panel.id.replace(`${prefix}-tab-`, '');
+    panel.classList.toggle('active', panelTab === tab);
+  });
+}
+
+// ═══════════════════════════════════════════
+// TELA JOGADOR (ACUSAÇÃO / DEFESA)
+// ═══════════════════════════════════════════
+function buildGame() {
+  const c = CASOS[casoIdx];
+  const isAcu = role === 'acusacao';
+
+  document.getElementById('tb-case').textContent = c.num;
+  document.getElementById('tb-title').textContent = c.title;
+  const roleEl = document.getElementById('tb-role');
+  roleEl.textContent = isAcu ? '⚔️ Acusação' : '🛡️ Defesa';
+  roleEl.className = 'topbar-role ' + role;
+
+  document.getElementById('g-tags').innerHTML = c.tags.map((t, i) =>
+    `<span class="tag ${c.tagClasses[i]}">${t}</span>`).join('');
+  document.getElementById('g-title').textContent = c.title;
+  document.getElementById('g-body').innerHTML = c.body;
+
+  // Args
+  document.getElementById('args-title-text').textContent = isAcu
+    ? '// seus agravantes · contra você'
+    : '// suas atenuantes · contra você';
+  buildArgCards(isAcu);
+
+  // Vade
+  const vhdr = document.getElementById('vade-hdr');
+  vhdr.className = 'vade-header open ' + (isAcu ? 'acusacao-h' : 'defesa-h');
+  document.getElementById('vade-htitle-text').style.color = isAcu ? 'var(--red)' : 'var(--blue)';
+  buildVade();
+
+  // Guia
+  const guias = isAcu ? c.guia_acusacao : c.guia_defesa;
+  const guideEl = document.getElementById('guide-grid');
+  guideEl.className = 'guide-grid ' + (isAcu ? 'acusacao-guide' : 'defesa-guide');
+  guideEl.innerHTML = guias.map((q, i) => `<div class="guide-item" data-n="${i + 1}">${q}</div>`).join('');
+  document.getElementById('guide-label').textContent = isAcu
+    ? '// perguntas para guiar sua acusação'
+    : '// perguntas para guiar sua defesa';
+
+  // Hot grid
+  document.getElementById('hot-grid').innerHTML = c.pontos.map(p => `<div class="hot-item">${p}</div>`).join('');
+
+  // Notepad
+  const noteKey = `${casoIdx}-${role}`;
+  const ta = document.getElementById('notepad-ta');
+  ta.value = notesStore[noteKey] || '';
+  ta.placeholder = isAcu
+    ? 'Construa aqui sua linha de acusação... Quais são seus argumentos mais fortes? Como você vai afastar as excludentes?'
+    : 'Construa aqui sua linha de defesa... Quais excludentes têm mais chance? Como você vai atacar as qualificadoras?';
+  updateCount();
+
+  // Instâncias
+  c.instancias.forEach((inst, i) => {
+    const el = document.getElementById(`i-${i}`);
+    if (el) el.innerHTML = `
+      <div class="inst-row">
+        <span class="inst-badge ${inst.badgeClass}">${inst.badge}</span>
+        <span class="inst-trib">${inst.tribunal}</span>
+        <span class="inst-pena">${inst.pena}</span>
+      </div>
+      <div class="inst-texto">${inst.texto}</div>
+      <div class="inst-ratio">${inst.ratio}</div>`;
+  });
+  for (let i = c.instancias.length; i < 3; i++) {
+    const el = document.getElementById(`i-${i}`);
+    if (el) el.innerHTML = '<div style="color:var(--text3);font-size:13px;font-style:italic;padding:8px 0;">Instância não disponível para este caso.</div>';
+  }
+  showInst(0);
+}
+
+function buildArgCards(isAcu) {
+  const c = CASOS[casoIdx];
+  const favs = isAcu ? c.agravantes : c.atenuantes;
+  const contras = isAcu ? c.atenuantes : c.agravantes;
+  const grid = document.getElementById('args-grid');
+  let html = '';
+  favs.forEach((a, i) => {
+    html += `<div class="arg-card fav" id="arg-fav-${i}" onclick="toggleArg('fav',${i})">
+      <div class="arg-label fav">${isAcu ? '🔺 A SEU FAVOR' : '🔻 A SEU FAVOR'}</div>
+      <div class="arg-text">${a}</div>
+      <span class="arg-check">✓</span>
+    </div>`;
+  });
+  contras.forEach((a, i) => {
+    html += `<div class="arg-card contra" id="arg-con-${i}" onclick="toggleArg('con',${i})">
+      <div class="arg-label contra">${isAcu ? '🔻 CONTRA VOCÊ' : '🔺 CONTRA VOCÊ'}</div>
+      <div class="arg-text">${a}</div>
+      <span class="arg-check">✓</span>
+    </div>`;
+  });
+  grid.innerHTML = html;
+  updateArgCounter();
+}
+
+function toggleArg(type, idx) {
+  const key = type + idx;
+  const el = document.getElementById(`arg-${type}-${idx}`);
+  if (checkedArgs.has(key)) { checkedArgs.delete(key); el.classList.remove('checked'); }
+  else { checkedArgs.add(key); el.classList.add('checked'); }
+  updateArgCounter();
+}
+
+function updateArgCounter() {
+  document.getElementById('args-counter').textContent = `${checkedArgs.size} marcado${checkedArgs.size !== 1 ? 's' : ''}`;
+}
+
+// ═══════════════════════════════════════════
+// VADE
+// ═══════════════════════════════════════════
+function buildVade() {
+  const arts = VADE[casoIdx];
+  const tabsEl = document.getElementById('vade-tabs');
+  const panelsEl = document.getElementById('vade-panels');
+  tabsEl.innerHTML = arts.map((a, i) => `<button class="vade-tab ${i === 0 ? 'active' : ''}" onclick="showVadeArt(${i})">${a.tab}</button>`).join('');
+  panelsEl.innerHTML = arts.map((a, i) => `
+    <div class="vade-panel ${i === 0 ? 'active' : ''}">
+      <div class="vade-art-id">${a.id}</div>
+      <div class="vade-art-title">${a.titulo}</div>
+      <div class="vade-art-fonte">${a.fonte}</div>
+      <div class="vade-pena">⚖️ ${a.pena}</div>
+      <div class="vade-texto">${a.texto}</div>
+      <div class="vade-exp">${a.exp}</div>
+      ${a.pars && a.pars.length ? `<div class="vade-pars-title">§§ parágrafos / incisos relevantes</div>${a.pars.map(p => `<div class="vade-par"><span class="vade-par-n">${p.n}</span><span>${p.t}</span></div>`).join('')}` : ''}
+      ${a.juris && a.juris.length ? `<div class="vade-juris-title">📚 jurisprudência relevante</div>${a.juris.map(j => `<div class="vade-juris-item">${j.t}<span class="vade-juris-ref">— ${j.r}</span></div>`).join('')}` : ''}
+      <div class="vade-dica"><div class="vade-dica-t">🎯 dica estratégica</div>${a.dica}</div>
+    </div>
+  `).join('');
+}
+
+function toggleVade() {} // no-op, vade is always open in tab view
+
+function showVadeArt(i) {
+  document.querySelectorAll('.vade-tab').forEach((el, j) => el.classList.toggle('active', j === i));
+  document.querySelectorAll('.vade-panel').forEach((el, j) => el.classList.toggle('active', j === i));
+}
+
+function showInst(i) {
+  document.querySelectorAll('.inst-panel').forEach((el, j) => el.classList.toggle('active', j === i));
+  document.querySelectorAll('.inst-tab').forEach((el, j) => el.classList.toggle('active', j === i));
+}
+
+// ═══════════════════════════════════════════
+// NOTEPAD
+// ═══════════════════════════════════════════
+const TEMPLATES = {
+  tese: `📌 TESE PRINCIPAL\n\n[Descreva aqui sua tese principal]\n\nFundamentação legal:\n- \n\nJurisprudência:\n- \n\n`,
+  sub: `🔀 TESE SUBSIDIÁRIA\n\nCaso a tese principal não seja acolhida:\n\n[Descreva a tese subsidiária]\n\nAplicação ao caso:\n- \n\n`,
+  dosi: `🧮 DOSIMETRIA\n\n1ª FASE (Pena-base):\n- Culpabilidade:\n- Antecedentes:\n- Conduta social:\n- Personalidade:\n- Circunstâncias:\n- Consequências:\n- Comportamento da vítima:\n\nPena-base: ___\n\n2ª FASE (Agravantes/Atenuantes):\n- \n\nPena intermediária: ___\n\n3ª FASE (Causas de aumento):\n- \n\nPena final: ___\nRegime: ___\n\n`,
+  refu: `⚔️ CONTRA-ARGUMENTOS\n\nArgumento da parte contrária:\n[]\n\nMinha resposta:\n[]\n\nJurisprudência de suporte:\n[]\n\n`,
+  juri: `📚 JURISPRUDÊNCIA\n\nSTF:\n- \n\nSTJ:\n- \n\nTribunais locais:\n- \n\n`
+};
+
+const JUIZ_TEMPLATES = {
+  intro: `📜 RELATÓRIO\n\nTrata-se de ação penal em que [acusado] é acusado de [crime], em tese praticado em [data/local].\n\nA acusação alega:\n- \n\nA defesa alega:\n- \n\n`,
+  fund: `⚖️ FUNDAMENTAÇÃO\n\nDo tipo penal:\n[]\n\nDos fatos provados:\n[]\n\nDas excludentes/atenuantes arguidas:\n[]\n\nDa dosimetria:\n[]\n\n`,
+  disp: `🔨 DISPOSITIVO\n\nDiante do exposto, JULGO [PROCEDENTE/IMPROCEDENTE] a ação penal para:\n\n[ ] CONDENAR ___ a ___ de reclusão/detenção em regime ___.\n[ ] SUBSTITUIR por penas alternativas (Art. 44 CP).\n[ ] ABSOLVER ___ nos termos do Art. ___ CPP.\n\n`,
+  dosi: `🧮 DOSIMETRIA (JUIZ)\n\nPena-base fixada em: ___\nFundamento: ___\n\nAgravantes: ___\nAtenuantes: ___\nPena provisória: ___\n\nCausas de aumento: ___\nCausas de diminuição: ___\nPena definitiva: ___\n\nRegime: ___\n`
+};
+
+function insertTemplate(key) {
+  const ta = document.getElementById('notepad-ta');
+  ta.value += TEMPLATES[key] || '';
+  onNoteInput();
+  ta.focus();
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function insertJuizTemplate(key) {
+  const ta = document.getElementById('juiz-notepad-ta');
+  ta.value += JUIZ_TEMPLATES[key] || '';
+  onJuizNoteInput();
+  ta.focus();
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function onNoteInput() {
+  const ta = document.getElementById('notepad-ta');
+  const noteKey = `${casoIdx}-${role}`;
+  notesStore[noteKey] = ta.value;
+  const words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+  const badge = document.getElementById('save-badge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 1500);
+}
+
+function onJuizNoteInput() {
+  const ta = document.getElementById('juiz-notepad-ta');
+  juizNotesStore[casoIdx] = ta.value;
+  const words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  document.getElementById('j-word-count').textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+  const badge = document.getElementById('j-save-badge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 1500);
+}
+
+function updateCount() {
+  const ta = document.getElementById('notepad-ta');
+  const words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+}
+
+function clearNote() {
+  if (!confirm('Limpar todas as anotações?')) return;
+  const ta = document.getElementById('notepad-ta');
+  ta.value = '';
+  const noteKey = `${casoIdx}-${role}`;
+  notesStore[noteKey] = '';
+  updateCount();
+}
+
+function clearJuizNote() {
+  if (!confirm('Limpar todas as anotações?')) return;
+  const ta = document.getElementById('juiz-notepad-ta');
+  ta.value = '';
+  juizNotesStore[casoIdx] = '';
+  document.getElementById('j-word-count').textContent = '0 palavras';
+}
+
+// ═══════════════════════════════════════════
+// TELA JUIZ
+// ═══════════════════════════════════════════
+function buildJuiz() {
+  const c = CASOS[casoIdx];
+  scoreAcu = 0; scoreDef = 0;
+  document.getElementById('score-acu').textContent = 0;
+  document.getElementById('score-def').textContent = 0;
+
+  document.getElementById('jtb-case').textContent = c.num;
+  document.getElementById('jtb-title').textContent = c.title;
+  document.getElementById('j-tags').innerHTML = c.tags.map((t, i) =>
+    `<span class="tag ${c.tagClasses[i]}">${t}</span>`).join('');
+  document.getElementById('j-title').textContent = c.title;
+  document.getElementById('j-body').innerHTML = c.body;
+
+  buildCalc();
+  buildHotJuiz();
+  buildVeredito();
+
+  // Notas do juiz
+  const ta = document.getElementById('juiz-notepad-ta');
+  ta.value = juizNotesStore[casoIdx] || '';
+  const words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  document.getElementById('j-word-count').textContent = `${words} palavra${words !== 1 ? 's' : ''}`;
+}
+
+function buildCalc() {
+  const c = CASOS[casoIdx].calc;
+  document.getElementById('pb-min-label').textContent = c.label_min;
+  document.getElementById('pb-max-label').textContent = c.label_max;
+  document.getElementById('slider-pb').value = 50;
+
+  const aggEl = document.getElementById('check-agravantes');
+  aggEl.innerHTML = [
+    ...(c.agravantes || []).map((a, i) => buildCheckItem(a, i, 'agg')),
+    ...(c.atenuantes || []).map((a, i) => buildCheckItem(a, i, 'ate'))
+  ].join('');
+
+  const majEl = document.getElementById('check-majorantes');
+  majEl.innerHTML = (c.majorantes || []).map((a, i) => buildCheckItem(a, i, 'maj')).join('');
+  if (!c.majorantes || c.majorantes.length === 0) {
+    majEl.innerHTML = '<div style="color:var(--text3);font-size:12.5px;font-style:italic;padding:4px 0;">Nenhuma causa de aumento/diminuição específica para este caso.</div>';
+  }
+
+  checkedAgg.clear(); checkedAte.clear(); checkedMaj.clear();
+  calcPena();
+}
+
+function buildCheckItem(a, i, group) {
+  const id = `${group}-${i}`;
+  return `<div class="check-item" id="ci-${id}" onclick="toggleCheck('${group}',${i})">
+    <div class="check-box" id="cb-${id}"></div>
+    <div class="check-label-wrap">
+      <div class="check-label">${a.label}</div>
+      <div class="check-effect">${a.efeito}</div>
+    </div>
+  </div>`;
+}
+
+function toggleCheck(group, i) {
+  const c = CASOS[casoIdx].calc;
+  let arr, set;
+  if (group === 'agg') { arr = c.agravantes; set = checkedAgg; }
+  else if (group === 'ate') { arr = c.atenuantes; set = checkedAte; }
+  else { arr = c.majorantes; set = checkedMaj; }
+
+  const item = arr[i];
+  const el = document.getElementById(`ci-${group}-${i}`);
+  const cb = document.getElementById(`cb-${group}-${i}`);
+  if (set.has(i)) {
+    set.delete(i);
+    el.classList.remove('active-agg', 'active-ate');
+    cb.textContent = '';
+  } else {
+    set.add(i);
+    el.classList.add(item.tipo === 'agg' ? 'active-agg' : 'active-ate');
+    cb.textContent = '✓';
+  }
+  calcPena();
+}
+
+function calcPena() {
+  const c = CASOS[casoIdx].calc;
+  const sliderVal = parseInt(document.getElementById('slider-pb').value);
+  const range = c.maxBase - c.minBase;
+  let penaBase = c.minBase + (range * sliderVal / 100);
+  document.getElementById('pb-val').textContent = formatYears(penaBase);
+
+  let mult = 1;
+  let absolvido = false;
+  let notes = [];
+
+  checkedAgg.forEach(i => {
+    const a = c.agravantes[i];
+    if (!a) return;
+    if (a.absol) { absolvido = true; return; }
+    if (a.fixMin !== undefined) { penaBase = Math.max(penaBase, a.fixMin); notes.push(`Qualifica → mín. ${a.fixMin}a`); }
+    else { mult += a.mult; notes.push(a.efeito); }
+  });
+  checkedAte.forEach(i => {
+    const a = c.atenuantes[i];
+    if (!a) return;
+    if (a.absol) { absolvido = true; return; }
+    mult += a.mult;
+    notes.push(a.efeito);
+  });
+  checkedMaj.forEach(i => {
+    const a = c.majorantes[i];
+    if (a) { mult += a.mult; notes.push(a.efeito); }
+  });
+
+  if (absolvido) {
+    document.getElementById('pena-display').innerHTML = `Absolvição<span> reconhecida</span>`;
+    document.getElementById('pena-regime').textContent = '✓ Sem pena privativa';
+    document.getElementById('pena-breakdown').textContent = 'Excludente ou erro de tipo reconhecido';
+    document.getElementById('regime-detail').textContent = 'Absolvição plena — sem cumprimento de pena.';
+    return;
+  }
+
+  let penaFinal = Math.max(0.5, penaBase * mult);
+  document.getElementById('pena-display').innerHTML = `${formatYears(penaFinal)}<span> anos</span>`;
+
+  let regime, regimeDetail;
+  if (penaFinal <= 1) { regime = '🟢 Regime aberto + Art. 44 (alternativa)'; regimeDetail = 'Pena ≤ 1 ano: muito provável substituição por penas restritivas de direito (Art. 44 CP).'; }
+  else if (penaFinal <= 4) { regime = '🟡 Regime aberto — Art. 44 possível'; regimeDetail = 'Pena ≤ 4 anos + réu primário + crime sem violência: substituição por penas alternativas possível.'; }
+  else if (penaFinal <= 8) { regime = '🟠 Regime semiaberto'; regimeDetail = 'Pena de 4 a 8 anos: regime semiaberto. Progressão possível após cumprimento de 1/6 (réu primário).'; }
+  else { regime = '🔴 Regime fechado'; regimeDetail = 'Pena acima de 8 anos: regime fechado obrigatório. Progressão após 1/6 (réu primário) ou 2/5 (crimes hediondos).'; }
+
+  document.getElementById('pena-regime').textContent = regime;
+  document.getElementById('pena-breakdown').textContent = notes.length > 0 ? notes.join(' · ') : 'Pena-base sem modificadores';
+  document.getElementById('regime-detail').textContent = regimeDetail;
+}
+
+function formatYears(v) {
+  if (v < 1) { const m = Math.round(v * 12); return `${m} m`; }
+  const years = Math.floor(v);
+  const months = Math.round((v - years) * 12);
+  if (months === 0) return `${years}`;
+  return `${years}a${months}m`;
+}
+
+function buildHotJuiz() {
+  const c = CASOS[casoIdx];
+  const el = document.getElementById('hot-juiz-grid');
+  el.innerHTML = c.pontos.map((p, i) => `
+    <div class="hot-juiz-item">
+      <div class="hot-juiz-q">${p}</div>
+      <div class="hot-juiz-positions">
+        <button class="hjp-btn acu" id="hjp-${i}-a" onclick="toggleHjp(${i},'acu')">⚔️ Ponto para acusação</button>
+        <button class="hjp-btn def" id="hjp-${i}-d" onclick="toggleHjp(${i},'def')">🛡️ Ponto para defesa</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleHjp(i, side) {
+  const a = document.getElementById(`hjp-${i}-a`);
+  const d = document.getElementById(`hjp-${i}-d`);
+  if (side === 'acu') { a.classList.toggle('sel'); d.classList.remove('sel'); }
+  else { d.classList.toggle('sel'); a.classList.remove('sel'); }
+}
+
+function buildVeredito() {
+  const container = document.getElementById('verdict-container');
+  container.innerHTML = `
+    <div class="verdict-locked-card">
+      <div class="verdict-lock-center">
+        <span class="lock-icon">🔒</span>
+        <div class="lock-title">Veredito Selado</div>
+        <div class="lock-sub">O veredito do juiz está bloqueado. Revele somente quando ambos os lados já tiverem feito seus argumentos e o debate estiver encerrado.</div>
+        <button class="lock-btn" onclick="revelarVeredito()">
+          <span>🔓</span> REVELAR VEREDITO
+        </button>
+      </div>
+    </div>`;
+}
+
+function revelarVeredito() {
+  const c = CASOS[casoIdx].calc.veredito;
+  const container = document.getElementById('verdict-container');
+  const stampsMap = {
+    'Condenado': { cl: 'condenado', icon: '⚖️' },
+    'Condenada': { cl: 'condenado', icon: '⚖️' },
+    'Absolvida': { cl: 'absolvido', icon: '✅' },
+    'Absolvido': { cl: 'absolvido', icon: '✅' },
+  };
+  const stamp = stampsMap[c.resultado] || { cl: 'parcial', icon: '⚠️' };
+  container.innerHTML = `
+    <div class="verdict-card verdict-revealed">
+      <div class="verdict-stamp">
+        <div class="verdict-stamp-icon">${stamp.icon}</div>
+        <div class="verdict-stamp-text">
+          <div class="verdict-stamp-label">VEREDITO DO JUIZ</div>
+          <div class="verdict-stamp-name ${stamp.cl}">${c.resultado}</div>
+        </div>
+      </div>
+      <div class="verdict-pena-box">
+        <div class="verdict-pena-num">${c.pena}</div>
+        <div class="verdict-pena-label">${c.regime}</div>
+      </div>
+      <div class="verdict-ratio">${c.ratio}</div>
+      <div class="verdict-fundamentacao">${c.fundamentacao}</div>
+      <div class="verdict-arts">${c.arts.map(a => `<span class="verdict-art-tag">${a}</span>`).join('')}</div>
+    </div>`;
+}
+
+function addScore(side) {
+  if (side === 'acu') { scoreAcu++; document.getElementById('score-acu').textContent = scoreAcu; }
+  else { scoreDef++; document.getElementById('score-def').textContent = scoreDef; }
+}
+
+function resetScore() {
+  scoreAcu = 0; scoreDef = 0;
+  document.getElementById('score-acu').textContent = 0;
+  document.getElementById('score-def').textContent = 0;
+}
+
+// Init
+initHome();
+</script>
+</body>
+</html>
