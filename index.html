@@ -510,8 +510,21 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
   </div>
 </div>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
+// ═══════════════════════════════════════════════════════
+// 🔥 FIREBASE CONFIG — cole aqui seus valores!
+// ═══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyB-ItDjYQ9uvde2ani8i284OtS8PlqCUPY",
+  authDomain: "tribunal-do-casual.firebaseapp.com",
+  databaseURL: "https://tribunal-do-casual-default-rtdb.firebaseio.com",
+  projectId: "tribunal-do-casual",
+  storageBucket: "tribunal-do-casual.firebasestorage.app",
+  messagingSenderId: "1035113413958",
+  appId: "1:1035113413958:web:bad0cf3c0a4b7b56957947"
+};
 // ═══════════════════════════════════════════════════════
 // DADOS DOS CASOS
 // ═══════════════════════════════════════════════════════
@@ -658,6 +671,9 @@ ARTIGOS: Art. 147-A (stalking), Art. 147 (ameaça), LMP Art. 40 (+1/3), Art. 26 
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
 let state = {
   roomCode: '',
   myRole: '',
@@ -674,60 +690,32 @@ let state = {
   verdictRevealed: false,
 };
 
-// BroadcastChannel pra sync entre abas/celulares no mesmo dispositivo
-// + localStorage pra persistência
-let bc = null;
-const STORE_KEY = () => `tc-room-${state.roomCode}`;
+let db = null;
+let roomRef = null;
+let messagesRef = null;
 
-function broadcastState(payload) {
+// ═══════════════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════════════
+function initFirebase() {
   try {
-    if (bc) bc.postMessage(payload);
-    // Também salva no localStorage pra suporte cross-device via polling
-    if (state.roomCode) {
-      const stored = JSON.parse(localStorage.getItem(STORE_KEY()) || '{}');
-      Object.assign(stored, payload, { _ts: Date.now() });
-      localStorage.setItem(STORE_KEY(), JSON.stringify(stored));
-    }
-  } catch(e) {}
-}
-
-function pollRoom() {
-  if (!state.roomCode) return;
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORE_KEY()) || '{}');
-    if (stored.partnerJoined && !state.partnerName) {
-      const incoming = stored.partnerRole !== state.myRole ? stored : null;
-      if (incoming && incoming.partnerName) {
-        state.partnerName = incoming.partnerName;
-        state.partnerRole = incoming.partnerRole;
-        updateWaitingUI();
-        if (stored.ready) launchGame();
-      }
-    }
-    // Sync mensagens
-    if (stored.messages && stored.messages.length > state.messages.length) {
-      const newMsgs = stored.messages.slice(state.messages.length);
-      newMsgs.forEach(m => {
-        if (m.sender !== state.myName) {
-          state.messages.push(m);
-          renderMessage(m, false);
-        }
-      });
-    }
-    // Sync score
-    if (stored.scoreAcu !== undefined) {
-      state.scoreAcu = stored.scoreAcu;
-      state.scoreDef = stored.scoreDef;
-      document.getElementById('sc-acu').textContent = state.scoreAcu;
-      document.getElementById('sc-def').textContent = state.scoreDef;
-    }
-  } catch(e) {}
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    return true;
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    return false;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
 // LOBBY
 // ═══════════════════════════════════════════════════════
 function initLobby() {
+  if (!initFirebase()) {
+    alert('Erro ao conectar ao Firebase. Verifique a configuração!');
+    return;
+  }
   const scroll = document.getElementById('case-scroll');
   scroll.innerHTML = CASES.map((c,i)=>`
     <div class="case-chip ${i===0?'active':''}" onclick="selectCase(${i})">${c.id} · ${c.nome}</div>`).join('');
@@ -750,118 +738,151 @@ function selectJoinRole(r) {
   document.getElementById('rj-def').classList.toggle('sel', r==='defesa');
 }
 
-function createRoom() {
+// ═══════════════════════════════════════════════════════
+// CRIAR SALA — Firebase
+// ═══════════════════════════════════════════════════════
+async function createRoom() {
   const name = document.getElementById('inp-name-create').value.trim();
   if (!name) { alert('Digite seu nome!'); return; }
   if (!state.createRole) { alert('Escolha seu papel!'); return; }
 
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true;
+  btn.textContent = 'CRIANDO...';
+
   state.myName = name;
   state.myRole = state.createRole;
+  // Gera código de 4 letras
   state.roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
 
-  // Salva sala no localStorage
-  localStorage.setItem(STORE_KEY(), JSON.stringify({
-    creator: name,
-    creatorRole: state.myRole,
-    caseIdx: state.caseIdx,
-    messages: [],
-    scoreAcu: 0, scoreDef: 0,
-    _ts: Date.now(),
-  }));
+  roomRef = db.ref(`rooms/${state.roomCode}`);
+  messagesRef = db.ref(`rooms/${state.roomCode}/messages`);
 
-  setupBroadcast();
-  showWaiting();
+  try {
+    // Verifica se código já existe (colisão rara)
+    const snap = await roomRef.once('value');
+    if (snap.exists()) {
+      state.roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
+      roomRef = db.ref(`rooms/${state.roomCode}`);
+      messagesRef = db.ref(`rooms/${state.roomCode}/messages`);
+    }
+
+    await roomRef.set({
+      creator: name,
+      creatorRole: state.myRole,
+      caseIdx: state.caseIdx,
+      scoreAcu: 0,
+      scoreDef: 0,
+      ready: false,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+
+    // Auto-deleta a sala após 3 horas
+    setTimeout(() => { if (roomRef) roomRef.remove(); }, 3 * 60 * 60 * 1000);
+
+    btn.disabled = false;
+    btn.textContent = 'CRIAR SALA';
+    showWaiting();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'CRIAR SALA';
+    alert('Erro ao criar sala: ' + e.message);
+  }
 }
 
-function joinRoom() {
+// ═══════════════════════════════════════════════════════
+// ENTRAR EM SALA — Firebase
+// ═══════════════════════════════════════════════════════
+async function joinRoom() {
   const name = document.getElementById('inp-name-join').value.trim();
   const code = document.getElementById('inp-room-code').value.trim().toUpperCase();
   if (!name) { alert('Digite seu nome!'); return; }
   if (!state.joinRole) { alert('Escolha seu papel!'); return; }
-  if (code.length !== 4) { alert('Código inválido!'); return; }
+  if (code.length !== 4) { alert('Código inválido! Deve ter 4 letras.'); return; }
+
+  const btn = document.getElementById('btn-join');
+  btn.disabled = true;
+  btn.textContent = 'ENTRANDO...';
 
   state.myName = name;
   state.myRole = state.joinRole;
   state.roomCode = code;
 
-  // Verifica se sala existe
-  const stored = JSON.parse(localStorage.getItem(STORE_KEY()) || '{}');
-  if (!stored.creator) { alert('Sala não encontrada. Verifique o código!'); return; }
-  if (stored.creatorRole === state.myRole) {
-    alert(`O criador da sala já está como ${stored.creatorRole === 'acusacao' ? 'Acusação' : 'Defesa'}. Escolha o outro papel!`);
-    return;
-  }
+  roomRef = db.ref(`rooms/${code}`);
+  messagesRef = db.ref(`rooms/${code}/messages`);
 
-  state.caseIdx = stored.caseIdx || 0;
-  state.partnerName = stored.creator;
-  state.partnerRole = stored.creatorRole;
-
-  // Notifica o criador
-  const updated = Object.assign({}, stored, {
-    partnerJoined: true,
-    partnerName: name,
-    partnerRole: state.myRole,
-    ready: true,
-    _ts: Date.now(),
-  });
-  localStorage.setItem(STORE_KEY(), JSON.stringify(updated));
-
-  setupBroadcast();
-  launchGame();
-}
-
-function startAnySolo() {
-  state.solo = true;
-  state.partnerName = 'Parceiro';
-  state.partnerRole = state.myRole === 'acusacao' ? 'defesa' : 'acusacao';
-  launchGame();
-}
-
-function setupBroadcast() {
   try {
-    bc = new BroadcastChannel(`tc-${state.roomCode}`);
-    bc.onmessage = (e) => {
-      const d = e.data;
-      if (d.type === 'join') {
-        state.partnerName = d.name;
-        state.partnerRole = d.role;
-        updateWaitingUI();
-        const stored = JSON.parse(localStorage.getItem(STORE_KEY()) || '{}');
-        stored.ready = true;
-        localStorage.setItem(STORE_KEY(), JSON.stringify(stored));
-        setTimeout(() => launchGame(), 500);
-      }
-      if (d.type === 'msg') {
-        if (d.sender !== state.myName) {
-          state.messages.push(d);
-          renderMessage(d, false);
-          // notif
-          if (!document.getElementById('tab-chat').classList.contains('active')) {
-            document.getElementById('chat-notif').classList.add('show');
-          }
-        }
-      }
-      if (d.type === 'score') {
-        state.scoreAcu = d.scoreAcu;
-        state.scoreDef = d.scoreDef;
-        document.getElementById('sc-acu').textContent = state.scoreAcu;
-        document.getElementById('sc-def').textContent = state.scoreDef;
-      }
-    };
-  } catch(e) {}
+    const snap = await roomRef.once('value');
+    const room = snap.val();
+
+    if (!room) {
+      btn.disabled = false;
+      btn.textContent = 'ENTRAR NA SALA';
+      alert('Sala não encontrada! Verifique o código: ' + code);
+      return;
+    }
+
+    if (room.creatorRole === state.myRole) {
+      btn.disabled = false;
+      btn.textContent = 'ENTRAR NA SALA';
+      alert(`O criador já está como ${room.creatorRole === 'acusacao' ? 'Acusação ⚔️' : 'Defesa 🛡️'}. Escolha o outro papel!`);
+      return;
+    }
+
+    if (room.partnerName) {
+      btn.disabled = false;
+      btn.textContent = 'ENTRAR NA SALA';
+      alert('Sala já está cheia!');
+      return;
+    }
+
+    state.caseIdx = room.caseIdx || 0;
+    state.partnerName = room.creator;
+    state.partnerRole = room.creatorRole;
+
+    await roomRef.update({
+      partnerName: name,
+      partnerRole: state.myRole,
+      ready: true,
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR NA SALA';
+    setupRealtimeListeners();
+    launchGame();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR NA SALA';
+    alert('Erro ao entrar na sala: ' + e.message);
+  }
 }
 
+// ═══════════════════════════════════════════════════════
+// AGUARDANDO PARCEIRO
+// ═══════════════════════════════════════════════════════
 function showWaiting() {
   document.getElementById('card-create').style.display = 'none';
   document.querySelectorAll('.divider').forEach(el=>el.style.display='none');
   document.getElementById('card-join').style.display = 'none';
-  document.getElementById('card-waiting').style.display = 'block';
+  document.getElementById('card-waiting').style.display = 'flex';
+  document.getElementById('card-waiting').style.flexDirection = 'column';
+  document.getElementById('card-waiting').style.alignItems = 'center';
   document.getElementById('waiting-code').textContent = state.roomCode;
   updateWaitingUI();
-  // Poll a cada 2 segundos
-  setInterval(pollRoom, 2000);
-  // BroadcastChannel join
-  if (bc) bc.postMessage({ type:'join', name: state.myName, role: state.myRole });
+
+  // Escuta quando parceiro entrar
+  roomRef.on('value', (snap) => {
+    const room = snap.val();
+    if (!room) return;
+    if (room.ready && room.partnerName) {
+      state.partnerName = room.partnerName;
+      state.partnerRole = room.partnerRole;
+      updateWaitingUI();
+      roomRef.off(); // Para de escutar
+      setupRealtimeListeners();
+      setTimeout(() => launchGame(), 400);
+    }
+  });
 }
 
 function updateWaitingUI() {
@@ -883,9 +904,133 @@ function updateWaitingUI() {
     </div>`;
 }
 
+function startAnySolo() {
+  state.solo = true;
+  state.partnerName = 'Parceiro';
+  state.partnerRole = state.myRole === 'acusacao' ? 'defesa' : 'acusacao';
+  if (roomRef) roomRef.off();
+  launchGame();
+}
+
 // ═══════════════════════════════════════════════════════
-// LAUNCH GAME
+// LISTENERS TEMPO REAL — Firebase
 // ═══════════════════════════════════════════════════════
+function setupRealtimeListeners() {
+  if (!messagesRef) return;
+
+  // Escuta novas mensagens
+  let firstLoad = true;
+  messagesRef.on('child_added', (snap) => {
+    const msg = snap.val();
+    if (!msg) return;
+    // Ignora mensagens antigas ao entrar
+    if (firstLoad) return;
+    if (msg.sender !== state.myName) {
+      state.messages.push(msg);
+      renderMessage(msg, false);
+      if (!document.getElementById('tab-chat').classList.contains('active')) {
+        document.getElementById('chat-notif').classList.add('show');
+      }
+    }
+  });
+  // Após 1s, começa a processar novas mensagens
+  setTimeout(() => { firstLoad = false; }, 1000);
+
+  // Escuta placar
+  db.ref(`rooms/${state.roomCode}/scoreAcu`).on('value', (snap) => {
+    const v = snap.val();
+    if (v !== null && v !== state.scoreAcu) {
+      state.scoreAcu = v;
+      document.getElementById('sc-acu').textContent = v;
+    }
+  });
+  db.ref(`rooms/${state.roomCode}/scoreDef`).on('value', (snap) => {
+    const v = snap.val();
+    if (v !== null && v !== state.scoreDef) {
+      state.scoreDef = v;
+      document.getElementById('sc-def').textContent = v;
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ENVIAR MENSAGEM — Firebase
+// ═══════════════════════════════════════════════════════
+async function sendMessage() {
+  const inp = document.getElementById('chat-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  const msg = {
+    type: 'msg',
+    sender: state.myName,
+    role: state.myRole,
+    text: text,
+    time: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
+    arts: extractArts(text),
+  };
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  state.messages.push(msg);
+  renderMessage(msg, true);
+
+  // Salva no Firebase (parceiro recebe em tempo real)
+  if (!state.solo && messagesRef) {
+    try { await messagesRef.push(msg); } catch(e) {}
+  }
+
+  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito') || text.toLowerCase().includes('sentença'))) {
+    setTimeout(() => requestAIVerdict(), 1000);
+  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
+    setTimeout(() => judgeIntervene(), 800);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PLACAR — Firebase
+// ═══════════════════════════════════════════════════════
+async function addScore(side) {
+  if (side==='acu') state.scoreAcu++;
+  else state.scoreDef++;
+  document.getElementById('sc-acu').textContent = state.scoreAcu;
+  document.getElementById('sc-def').textContent = state.scoreDef;
+  if (!state.solo && roomRef) {
+    try {
+      await roomRef.update({ scoreAcu: state.scoreAcu, scoreDef: state.scoreDef });
+    } catch(e) {}
+  }
+}
+
+function resetScore() {
+  state.scoreAcu = 0; state.scoreDef = 0;
+  document.getElementById('sc-acu').textContent = '0';
+  document.getElementById('sc-def').textContent = '0';
+  if (!state.solo && roomRef) {
+    try { roomRef.update({ scoreAcu: 0, scoreDef: 0 }); } catch(e) {}
+  }
+}
+
+function backToLobby() {
+  if (confirm('Sair do debate?')) {
+    // Limpa listeners Firebase
+    if (messagesRef) messagesRef.off();
+    if (db && state.roomCode) {
+      db.ref(`rooms/${state.roomCode}/scoreAcu`).off();
+      db.ref(`rooms/${state.roomCode}/scoreDef`).off();
+    }
+    roomRef = null;
+    messagesRef = null;
+
+    document.getElementById('s-game').classList.remove('active');
+    document.getElementById('s-lobby').classList.add('active');
+    // Reset
+    state.messages = [];
+    state.verdictRevealed = false;
+    document.getElementById('chat-messages').innerHTML = '<div class="sys-msg">⚖️ Debate iniciado — que comecem os argumentos</div>';
+  }
+}
+
 function launchGame() {
   const c = CASES[state.caseIdx];
 
@@ -941,20 +1086,6 @@ function launchGame() {
   window.scrollTo(0,0);
 }
 
-function backToLobby() {
-  if (confirm('Sair do debate?')) {
-    document.getElementById('s-game').classList.remove('active');
-    document.getElementById('s-lobby').classList.add('active');
-    // Reset
-    state.messages = [];
-    state.verdictRevealed = false;
-    document.getElementById('chat-messages').innerHTML = '<div class="sys-msg">⚖️ Debate iniciado — que comecem os argumentos</div>';
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════════════
 function showTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id===`tab-${name}`));
@@ -989,45 +1120,6 @@ function insertArtPill(art) {
   const inp = document.getElementById('chat-inp');
   inp.value += `[${art}] `;
   inp.focus();
-}
-
-async function sendMessage() {
-  const inp = document.getElementById('chat-inp');
-  const text = inp.value.trim();
-  if (!text) return;
-
-  const msg = {
-    type: 'msg',
-    sender: state.myName,
-    role: state.myRole,
-    text: text,
-    time: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
-    arts: extractArts(text),
-  };
-
-  inp.value = '';
-  inp.style.height = 'auto';
-
-  state.messages.push(msg);
-  renderMessage(msg, true);
-
-  // Broadcast
-  if (bc) bc.postMessage(msg);
-
-  // Salva no localStorage
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORE_KEY()) || '{}');
-    stored.messages = state.messages;
-    localStorage.setItem(STORE_KEY(), JSON.stringify(stored));
-  } catch(e) {}
-
-  // Verifica se pediu veredito
-  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito') || text.toLowerCase().includes('sentença'))) {
-    setTimeout(() => requestAIVerdict(), 1000);
-  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
-    // A cada 6 mensagens, juiz comenta
-    setTimeout(() => judgeIntervene(), 800);
-  }
 }
 
 function extractArts(text) {
@@ -1229,28 +1321,6 @@ function calcPena() {
 
 // ═══════════════════════════════════════════════════════
 // PLACAR
-// ═══════════════════════════════════════════════════════
-function addScore(side) {
-  if (side==='acu') state.scoreAcu++;
-  else state.scoreDef++;
-  document.getElementById('sc-acu').textContent = state.scoreAcu;
-  document.getElementById('sc-def').textContent = state.scoreDef;
-  if (bc) bc.postMessage({type:'score',scoreAcu:state.scoreAcu,scoreDef:state.scoreDef});
-  try {
-    const s = JSON.parse(localStorage.getItem(STORE_KEY())||'{}');
-    s.scoreAcu = state.scoreAcu; s.scoreDef = state.scoreDef;
-    localStorage.setItem(STORE_KEY(), JSON.stringify(s));
-  } catch(e){}
-}
-
-function resetScore() {
-  state.scoreAcu = 0; state.scoreDef = 0;
-  document.getElementById('sc-acu').textContent = '0';
-  document.getElementById('sc-def').textContent = '0';
-}
-
-// ═══════════════════════════════════════════════════════
-// VEREDITO IA
 // ═══════════════════════════════════════════════════════
 function buildVerdictLocked() {
   document.getElementById('verdict-wrap').innerHTML = `
