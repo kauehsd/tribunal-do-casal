@@ -411,6 +411,38 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .nokey-warn a{color:var(--gold2);text-decoration:none;}
 
 .divhr{height:1px;background:var(--b1);margin:14px 0;}
+
+/* ══ BLOCO DE NOTAS ══ */
+#tab-notas{display:none;flex-direction:column;}
+#tab-notas.active{display:flex;}
+.notas-wrap{flex:1;display:flex;flex-direction:column;padding:14px;gap:10px;overflow-y:auto;}
+.notas-header{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.notas-header::after{content:'';flex:1;height:1px;background:var(--b1);}
+.notas-header .notas-badge{padding:3px 8px;border-radius:4px;background:var(--gold-d);border:1px solid rgba(201,149,58,.2);color:var(--gold2);font-size:9px;}
+.notas-ta{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px;color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.7;resize:none;outline:none;min-height:300px;transition:border-color .18s;}
+.notas-ta:focus{border-color:rgba(201,149,58,.3);}
+.notas-ta::placeholder{color:var(--text3);font-style:italic;}
+.notas-footer{display:flex;align-items:center;justify-content:space-between;padding:0 2px;}
+.notas-chars{font-family:var(--mono);font-size:9px;color:var(--text3);}
+.notas-saved{font-family:var(--mono);font-size:9px;color:var(--green2);opacity:0;transition:opacity .3s;}
+.notas-saved.show{opacity:1;}
+.notas-clear{background:none;border:none;font-family:var(--mono);font-size:9px;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:4px;transition:color .15s;}
+.notas-clear:hover{color:var(--red2);}
+
+/* ══ CHAT INSTÂNCIA ══ */
+.inst-chat-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--b1);}
+.inst-chat-title{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;margin-bottom:10px;}
+.inst-chat-msgs{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;margin-bottom:10px;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;}
+.inst-chat-row{display:flex;gap:8px;}
+.inst-chat-inp{flex:1;background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:none;min-height:40px;max-height:80px;transition:border-color .18s;}
+.inst-chat-inp:focus{border-color:var(--gold);}
+.inst-chat-send{padding:0 14px;border-radius:8px;border:none;background:var(--gold);color:#1a1000;font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;min-height:40px;flex-shrink:0;font-weight:500;transition:all .15s;}
+.inst-chat-send:hover{background:var(--gold2);}
+.inst-msg-j{text-align:center;font-family:var(--mono);font-size:9px;color:var(--gold2);background:rgba(201,149,58,.06);border:1px solid rgba(201,149,58,.15);border-radius:8px;padding:8px 12px;line-height:1.5;}
+
+/* ══ SYNC OVERLAY ══ */
+.sync-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--s1);border:1px solid var(--gold);border-radius:10px;padding:10px 18px;font-family:var(--mono);font-size:10px;color:var(--gold2);letter-spacing:.06em;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap;}
+.sync-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
@@ -614,7 +646,23 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       </div>
     </div>
 
+    <!-- TAB NOTAS -->
+    <div class="tab-panel" id="tab-notas">
+      <div class="notas-wrap">
+        <div class="notas-header">📝 bloco de notas <span class="notas-badge">PRIVADO — só você vê</span></div>
+        <textarea class="notas-ta" id="notas-ta" placeholder="Anote seus argumentos, estratégias, pontos a explorar...&#10;&#10;Só você vê isso — não aparece no chat nem para o adversário." oninput="onNotasInput()"></textarea>
+        <div class="notas-footer">
+          <span class="notas-chars" id="notas-chars">0 caracteres</span>
+          <span class="notas-saved" id="notas-saved">✓ salvo</span>
+          <button class="notas-clear" onclick="clearNotas()">✕ limpar</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /game-content -->
+
+  <!-- Sync toast -->
+  <div class="sync-toast" id="sync-toast"></div>
 
   <!-- Bottom Tab Bar -->
   <nav class="bottom-bar">
@@ -640,8 +688,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </button>
     <button class="btab" onclick="showTab('veredito')" data-tab="veredito">
       <div class="btab-indicator"></div>
-      <div class="btab-icon">⚖️</div>
+      <div class="btab-icon">⚖️<span class="btab-notif" id="veredito-notif"></span></div>
       <span class="btab-label">VEREDITO</span>
+    </button>
+    <button class="btab" onclick="showTab('notas')" data-tab="notas">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">📝</div>
+      <span class="btab-label">NOTAS</span>
     </button>
   </nav>
 
@@ -1034,21 +1087,82 @@ function setupRealtimeListeners() {
     const msg = snap.val();
     if (!msg || firstLoad) return;
     if (msg.sender !== state.myName) {
-      state.messages.push(msg);
-      renderMessage(msg, false);
-      const chatTab = document.querySelector('[data-tab="chat"]');
-      if (!chatTab.classList.contains('active')) {
-        document.getElementById('chat-notif').classList.add('show');
+      // Mensagem normal de chat
+      if (msg.type === 'msg') {
+        state.messages.push(msg);
+        renderMessage(msg, false);
+        const chatTab = document.querySelector('[data-tab="chat"]');
+        if (!chatTab.classList.contains('active')) {
+          document.getElementById('chat-notif').classList.add('show');
+        }
+      }
+      // Mensagem do juiz sincronizada
+      if (msg.type === 'judge') {
+        addJudgeMessage(msg.text, false);
+      }
+      // Mensagem de sistema sincronizada
+      if (msg.type === 'sys') {
+        addSysMessage(msg.text, false);
+      }
+      // Evento de veredito sincronizado
+      if (msg.type === 'verdict_ready') {
+        const inst = msg.instancia;
+        const v = msg.verdict;
+        if (v && !instState.verdicts[inst]) {
+          instState.verdicts[inst] = v;
+          renderInstanceVerdict(inst, v);
+          // Notifica e muda pra aba veredito
+          showSyncToast('⚖️ Veredito disponível!');
+          document.getElementById('veredito-notif').classList.add('show');
+          showTab('veredito');
+        }
+      }
+      // Recurso enviado pela outra parte
+      if (msg.type === 'recurso_submitted') {
+        const { fromInst, side, toInst, texto } = msg;
+        if (!instState.recursos[toInst]) instState.recursos[toInst] = {};
+        instState.recursos[toInst][side] = texto;
+        // Atualiza visual se a section estiver visível
+        const sideLabel = side==='acu'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+        const label = side==='acu'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+        const container = document.getElementById(`recurso-input-${fromInst}`);
+        if (container && container.style.display !== 'none') {
+          container.innerHTML = `<div class="recurso-arg ${side}"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">${label} — recurso registrado ✓</div><div style="font-size:12px;color:var(--text2);">${texto}</div></div>`;
+        }
+        const btn = document.getElementById(`btn-rec-${side}-${fromInst}`);
+        if (btn) { btn.disabled = true; btn.textContent = side==='acu'?'⚔️ Acusação Recorreu ✓':'🛡️ Defesa Recorreu ✓'; }
+        const readyEl = document.getElementById(`recurso-ready-${fromInst}`);
+        if (readyEl) readyEl.style.display = 'block';
+        showSyncToast(`📋 ${sideLabel.split(' ')[1]} registrou recurso`);
+      }
+      // Chat de instância (TJ/STJ) sincronizado
+      if (msg.type === 'inst_chat') {
+        appendInstChatMsg(msg.instancia, msg.role, msg.sender, msg.text, false);
       }
     }
   });
-  setTimeout(()=>{ firstLoad = false; }, 1000);
+  setTimeout(()=>{ firstLoad = false; }, 1200);
   db.ref(`rooms/${state.roomCode}/scoreAcu`).on('value', snap => {
     const v = snap.val(); if (v !== null && v !== state.scoreAcu) { state.scoreAcu=v; document.getElementById('sc-acu').textContent=v; }
   });
   db.ref(`rooms/${state.roomCode}/scoreDef`).on('value', snap => {
     const v = snap.val(); if (v !== null && v !== state.scoreDef) { state.scoreDef=v; document.getElementById('sc-def').textContent=v; }
   });
+}
+
+// ─── helpers de sync ───
+function showSyncToast(txt) {
+  const t = document.getElementById('sync-toast');
+  if (!t) return;
+  t.textContent = txt;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+async function pushSyncMsg(obj) {
+  if (!state.solo && messagesRef) {
+    try { await messagesRef.push({ ...obj, sender: state.myName }); } catch(e) {}
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1060,6 +1174,10 @@ function launchGame() {
   instState.recursos = { tj: null, stj: null };
   instState.currentInst = '1a';
   instState.recursoOpen = null;
+  // Reset chat de instâncias
+  instChatMsgs.tj = []; instChatMsgs.stj = [];
+  // Reset throttle do juiz
+  judgeLastIntervention = 0; judgeConsecutiveSkips = 0;
   const c = CASES[state.caseIdx];
   document.getElementById('gtb-title').textContent = c.titulo;
   const badge = document.getElementById('gtb-badge');
@@ -1086,12 +1204,14 @@ function launchGame() {
   document.getElementById('art-quick-row').innerHTML = c.arts_rapidos.map(a=>`
     <button class="art-quick-pill" onclick="insertArtPill('${a}')">${a}</button>`).join('');
   setTimeout(()=>{
-    addJudgeMessage(`⚖️ **Sessão iniciada.** Caso: *${c.titulo}*\n\n${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'}) está presente${state.solo?'':`· ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'}) está presente`}.\n\nPode iniciar os argumentos. Ao final, vá para aba **Veredito** e solicite o Juiz IA.`);
+    addJudgeMessage(`⚖️ **Sessão iniciada.** Caso: *${c.titulo}*\n\n${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'}) está presente${state.solo?'':`· ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'}) está presente`}.\n\nPode iniciar os argumentos. Ao final, vá para aba **Veredito** e solicite o Juiz IA.`, false);
   }, 600);
   document.getElementById('s-lobby').classList.remove('active');
   document.getElementById('s-game').classList.add('active');
   showTab('caso');
   window.scrollTo(0,0);
+  // Carrega notas após o jogo iniciar
+  setTimeout(()=>loadNotas(), 200);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1103,6 +1223,9 @@ function showTab(name) {
   if (name==='chat') {
     document.getElementById('chat-notif').classList.remove('show');
     setTimeout(()=>{ const cm=document.getElementById('chat-messages'); cm.scrollTop=cm.scrollHeight; }, 80);
+  }
+  if (name==='veredito') {
+    document.getElementById('veredito-notif').classList.remove('show');
   }
 }
 
@@ -1141,10 +1264,51 @@ async function sendMessage() {
   if (!state.solo && messagesRef) {
     try { await messagesRef.push(msg); } catch(e) {}
   }
-  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito')||text.toLowerCase().includes('sentença'))) {
-    setTimeout(()=>requestAIVerdict('1a'), 1000);
-  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
-    setTimeout(()=>judgeIntervene(), 800);
+  // Juiz intervém adaptativamente
+  judgeConsiderIntervention(msg);
+}
+
+// ─── controle de throttle do juiz ───
+let judgeLastIntervention = 0;
+let judgeConsecutiveSkips = 0;
+
+async function judgeConsiderIntervention(lastMsg) {
+  const now = Date.now();
+  const minInterval = 25000; // mínimo 25s entre intervenções
+  const msgCount = state.messages.filter(m=>m.type==='msg').length;
+
+  // Sempre intervém a cada 4 mensagens se já passou o intervalo mínimo
+  const shouldByTimer = (now - judgeLastIntervention) > minInterval;
+  const shouldByCount = msgCount > 0 && msgCount % 4 === 0;
+
+  // Detecta gatilhos de alta prioridade no texto
+  const txt = lastMsg.text.toLowerCase();
+  const isHighPriority = (
+    txt.includes('absolvição') || txt.includes('absolver') ||
+    txt.includes('condenar') || txt.includes('condena') ||
+    txt.includes('estado de necessidade') || txt.includes('dolo') ||
+    txt.includes('qualificadora') || txt.includes('insignific') ||
+    txt.includes('semi-imputab') || txt.includes('excludente') ||
+    txt.includes('art.') || txt.includes('[art') ||
+    txt.includes('súmula') || txt.includes('stj') || txt.includes('jurisprud')
+  );
+
+  if (isHighPriority && shouldByTimer) {
+    judgeLastIntervention = now;
+    judgeConsecutiveSkips = 0;
+    setTimeout(()=>judgeIntervene(lastMsg.text, 'tese'), 900);
+  } else if (shouldByCount && shouldByTimer) {
+    judgeLastIntervention = now;
+    judgeConsecutiveSkips = 0;
+    setTimeout(()=>judgeIntervene(lastMsg.text, 'geral'), 1100);
+  } else {
+    judgeConsecutiveSkips++;
+    // Força intervenção se ficou muito tempo sem falar
+    if (judgeConsecutiveSkips >= 6 && shouldByTimer) {
+      judgeLastIntervention = now;
+      judgeConsecutiveSkips = 0;
+      setTimeout(()=>judgeIntervene(lastMsg.text, 'lacuna'), 1000);
+    }
   }
 }
 
@@ -1167,7 +1331,7 @@ function renderMessage(msg, isMine) {
   }
 }
 
-function addJudgeMessage(text) {
+function addJudgeMessage(text, shouldSync) {
   const cm = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'msg judge';
@@ -1179,34 +1343,58 @@ function addJudgeMessage(text) {
     <div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>')}</div>`;
   cm.appendChild(div);
   cm.scrollTop = cm.scrollHeight;
+  // notifica se não estiver na aba
+  const chatTab = document.querySelector('[data-tab="chat"]');
+  if (chatTab && !chatTab.classList.contains('active')) {
+    document.getElementById('chat-notif').classList.add('show');
+  }
+  // sincroniza com o parceiro (shouldSync=undefined ou true)
+  if (shouldSync !== false) {
+    pushSyncMsg({ type:'judge', text });
+  }
 }
 
-function addSysMessage(text) {
+function addSysMessage(text, shouldSync) {
   const cm = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'sys-msg';
   div.textContent = text;
   cm.appendChild(div);
   cm.scrollTop = cm.scrollHeight;
+  if (shouldSync !== false) {
+    pushSyncMsg({ type:'sys', text });
+  }
 }
 
 // ═══════════════════════════════════════════════════════
-// JUDGE INTERVENE — com fallback se sem API key
+// JUDGE INTERVENE — adaptativo e participativo
 // ═══════════════════════════════════════════════════════
-async function judgeIntervene() {
+async function judgeIntervene(lastText, tipo) {
   const c = CASES[state.caseIdx];
-  const recent = state.messages.slice(-6).map(m=>`${m.sender} (${m.role}): ${m.text}`).join('\n');
+  const recent = state.messages.slice(-8).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
   const typing = document.getElementById('typing-ind');
   document.getElementById('typing-who').textContent = 'Juiz IA';
   typing.classList.add('show');
 
-  const fallbacks = [
-    'O Tribunal nota que o argumento da inevitabilidade ainda não foi suficientemente explorado.',
-    'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado.',
-    'O Ministério Público precisa responder à tese subsidiária da defesa.',
-    'A dosimetria da pena depende da qualificadora ser mantida ou afastada.',
-    'Qual a prova concreta apresentada além do depoimento da parte?',
-  ];
+  const fallbacksByTipo = {
+    tese: [
+      'Advogado(a), essa tese precisa de sustentação legal mais sólida. Qual dispositivo fundamenta especificamente isso?',
+      'O Tribunal nota contradição: se essa tese for aceita, como se compatibiliza com o argumento anterior da mesma parte?',
+      'Interessante. Mas o elemento subjetivo do tipo ainda não foi enfrentado. Qual a intenção concreta do réu?',
+    ],
+    lacuna: [
+      'O debate está avançado, mas nenhuma das partes enfrentou ainda o ponto mais controverso do caso. Quem vai?',
+      'O Ministério Público ainda não demonstrou o nexo causal de forma objetiva. Isso é determinante.',
+      'A Defesa ainda não apresentou prova ou tese alternativa concreta. Somente negação não é suficiente.',
+    ],
+    geral: [
+      'O Tribunal nota que o argumento da inevitabilidade ainda não foi suficientemente explorado.',
+      'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado.',
+      'A dosimetria da pena depende da qualificadora ser mantida ou afastada. Quem sustenta o quê?',
+      'Qual a prova concreta apresentada além do depoimento da parte?',
+    ],
+  };
+  const fallbacks = fallbacksByTipo[tipo] || fallbacksByTipo.geral;
 
   if (!geminiKey || !geminiKey.startsWith('AIza')) {
     await new Promise(r=>setTimeout(r, 1200));
@@ -1215,11 +1403,17 @@ async function judgeIntervene() {
     return;
   }
 
+  const promptsByTipo = {
+    tese: `O advogado acabou de argumentar: "${lastText}"\n\nIntervenha brevemente como juiz: questione a tese, aponte uma contradição, ou peça fundamentação legal específica. Máximo 2 linhas. Seja direto e juiz — não um professor.`,
+    lacuna: `O debate está acontecendo mas há lacunas. Aponte UMA lacuna importante que nenhuma das partes abordou ainda. Máximo 2 linhas. Seja específico ao caso.`,
+    geral: `Analise o debate recente e faça UMA intervenção breve como juiz: questione, aponte contradição, ou sinalize algo relevante não explorado. Máximo 2 linhas.`,
+  };
+
   try {
     const text = await callGemini(
-      `Você é um Juiz de Direito presidindo um debate jurídico simulado. Seja objetivo, didático e imparcial. Máximo 2-3 linhas. Faça uma pergunta desafiadora ou aponte um ponto jurídico não explorado.`,
-      `${c.context_juiz}\n\nDebate recente:\n${recent}\n\nIntervenção breve como juiz.`,
-      300
+      `Você é um Juiz de Direito presidindo debate jurídico simulado. Seja objetivo, imparcial e participativo. Use linguagem formal mas direta. IMPORTANTE: considere abreviações e linguagem informal como argumentos válidos — interprete o que foi dito, não a forma.`,
+      `${c.context_juiz}\n\nDebate recente:\n${recent}\n\n${promptsByTipo[tipo] || promptsByTipo.geral}`,
+      280
     );
     typing.classList.remove('show');
     addJudgeMessage(text || fallbacks[0]);
@@ -1415,10 +1609,19 @@ async function requestAIVerdict(instancia) {
   if (instancia === 'tj' && instState.recursos.tj) {
     const r = instState.recursos.tj;
     recursosCtx = `\n\nRECURSOS APRESENTADOS AO TJ:\nAcusação recorreu: ${r.acu||'não recorreu'}\nDefesa recorreu: ${r.def||'não recorreu'}`;
+    // Adiciona argumentos do chat do TJ
+    const instMsgs = instChatMsgs.tj || [];
+    if (instMsgs.length > 0) {
+      recursosCtx += `\n\nARGUMENTOS ADICIONAIS NO TJ:\n` + instMsgs.map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+    }
   }
   if (instancia === 'stj' && instState.recursos.stj) {
     const r = instState.recursos.stj;
     recursosCtx = `\n\nRECURSOS APRESENTADOS AO STJ:\nAcusação recorreu: ${r.acu||'não recorreu'}\nDefesa recorreu: ${r.def||'não recorreu'}`;
+    const instMsgs = instChatMsgs.stj || [];
+    if (instMsgs.length > 0) {
+      recursosCtx += `\n\nARGUMENTOS ADICIONAIS NO STJ:\n` + instMsgs.map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+    }
   }
 
   // Sentença anterior para TJ e STJ
@@ -1471,6 +1674,8 @@ Profira ${instLabels[instancia]}. Responda APENAS em JSON:
     const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
     instState.verdicts[instancia] = fallback;
     renderInstanceVerdict(instancia, fallback);
+    // Sincroniza com parceiro
+    pushSyncMsg({ type:'verdict_ready', instancia, verdict: fallback, sender: state.myName });
     return;
   }
 
@@ -1482,16 +1687,20 @@ Profira ${instLabels[instancia]}. Responda APENAS em JSON:
     if (v) {
       instState.verdicts[instancia] = v;
       renderInstanceVerdict(instancia, v);
+      // Sincroniza com parceiro
+      pushSyncMsg({ type:'verdict_ready', instancia, verdict: v, sender: state.myName });
     } else {
       const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
       instState.verdicts[instancia] = fallback;
       renderInstanceVerdict(instancia, fallback);
+      pushSyncMsg({ type:'verdict_ready', instancia, verdict: fallback, sender: state.myName });
     }
   } catch(e) {
     console.error('Gemini Verdict error:', e);
     const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
     instState.verdicts[instancia] = fallback;
     renderInstanceVerdict(instancia, fallback);
+    pushSyncMsg({ type:'verdict_ready', instancia, verdict: fallback, sender: state.myName });
   }
 }
 
@@ -1537,17 +1746,30 @@ function renderInstanceVerdict(instancia, v) {
   let recursoHTML = '';
   if (proxima) {
     const proximaLabel = proxima==='tj'?'Tribunal de Justiça':'STJ';
-    const instRecKey = proxima; // 'tj' ou 'stj'
+    // Monta args de recurso já existentes
+    const recTj = instState.recursos[proxima] || {};
+    const recAcuHTML = recTj.acu ? `<div class="recurso-arg acu" style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">⚔️ ACUSAÇÃO — recurso registrado ✓</div><div style="font-size:12px;color:var(--text2);">${recTj.acu}</div></div>` : '';
+    const recDefHTML = recTj.def ? `<div class="recurso-arg def" style="margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">🛡️ DEFESA — recurso registrado ✓</div><div style="font-size:12px;color:var(--text2);">${recTj.def}</div></div>` : '';
     recursoHTML = `
       <div class="recurso-section" id="recurso-section-${instancia}">
         <div class="recurso-title">// RECURSO PARA O ${proximaLabel.toUpperCase()}</div>
         <div class="recurso-btns">
-          <button class="btn-recurso acu" id="btn-rec-acu-${instancia}" onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ Acusação Recorre</button>
-          <button class="btn-recurso def" id="btn-rec-def-${instancia}" onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ Defesa Recorre</button>
+          <button class="btn-recurso acu" id="btn-rec-acu-${instancia}" ${recTj.acu?'disabled':''} onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ ${recTj.acu?'Acusação Recorreu ✓':'Acusação Recorre'}</button>
+          <button class="btn-recurso def" id="btn-rec-def-${instancia}" ${recTj.def?'disabled':''} onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ ${recTj.def?'Defesa Recorreu ✓':'Defesa Recorre'}</button>
         </div>
+        ${recAcuHTML}${recDefHTML}
         <div id="recurso-input-${instancia}" style="display:none;"></div>
-        <div id="recurso-ready-${instancia}" style="display:none;">
+        <div id="recurso-ready-${instancia}" style="${(recTj.acu||recTj.def)?'':'display:none;'}">
           <button class="btn-reveal" style="margin-top:12px;width:100%;" onclick="requestAIVerdict('${proxima}')">⚖️ Submeter ao ${proximaLabel}</button>
+        </div>
+        <!-- Chat da instância superior -->
+        <div class="inst-chat-section" id="inst-chat-${proxima}">
+          <div class="inst-chat-title">// DEBATE ADICIONAL — ${proximaLabel.toUpperCase()} (argumentos somam ao veredito)</div>
+          <div class="inst-chat-msgs" id="inst-chat-msgs-${proxima}"></div>
+          <div class="inst-chat-row">
+            <textarea class="inst-chat-inp" id="inst-chat-inp-${proxima}" placeholder="Novo argumento para o ${proximaLabel}..." rows="1" onkeydown="onInstChatKey(event,'${proxima}')"></textarea>
+            <button class="inst-chat-send" onclick="sendInstChatMsg('${proxima}')">ENVIAR</button>
+          </div>
         </div>
       </div>`;
   } else {
@@ -1565,13 +1787,13 @@ function renderInstanceVerdict(instancia, v) {
   // Renderiza tudo
   document.getElementById('verdict-wrap').innerHTML = navHTML + `<div id="inst-panels">` + verdictHTML + recursoHTML + `</div>`;
 
-  // Mensagem no chat
+  // Mensagem no chat principal
   const chatMsg = instancia==='1a'
     ? `⚖️ **SENTENÇA DE 1ª INSTÂNCIA**\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`
     : instancia==='tj'
     ? `🏛️ **ACÓRDÃO DO TJ** (${v.reforma||'—'})\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`
     : `🔴 **DECISÃO DO STJ** (${v.reforma||'—'}) — TRÂNSITO EM JULGADO\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`;
-  addJudgeMessage(chatMsg);
+  addJudgeMessage(chatMsg, false); // não resinc (já foi sincronizado via verdict_ready)
 
   instState.currentInst = instancia;
 }
@@ -1638,7 +1860,10 @@ function submitRecurso(fromInst, side, toInst) {
   const readyEl = document.getElementById(`recurso-ready-${fromInst}`);
   if (readyEl) readyEl.style.display = 'block';
 
-  addSysMessage(`📋 Recurso da ${side==='acu'?'Acusação':'Defesa'} registrado para o ${toInst==='tj'?'TJ':'STJ'}.`);
+  addSysMessage(`📋 Recurso da ${side==='acu'?'Acusação':'Defesa'} registrado para o ${toInst==='tj'?'TJ':'STJ'}.`, false);
+
+  // Sincroniza recurso com parceiro
+  pushSyncMsg({ type:'recurso_submitted', fromInst, side, toInst, texto });
 }
 
 function generateFallbackVerdict(c, scoreAcu, scoreDef, instancia) {
@@ -1670,6 +1895,125 @@ function generateFallbackVerdict(c, scoreAcu, scoreDef, instancia) {
       artigos: c.arts_rapidos.slice(0,2), reforma
     };
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHAT DAS INSTÂNCIAS SUPERIORES
+// ═══════════════════════════════════════════════════════
+const instChatMsgs = { tj: [], stj: [] };
+
+function onInstChatKey(e, inst) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendInstChatMsg(inst); }
+}
+
+async function sendInstChatMsg(inst) {
+  const inp = document.getElementById(`inst-chat-inp-${inst}`);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+
+  if (!instChatMsgs[inst]) instChatMsgs[inst] = [];
+  instChatMsgs[inst].push({ role: state.myRole, sender: state.myName, text });
+
+  appendInstChatMsg(inst, state.myRole, state.myName, text, true);
+
+  // Sincroniza com parceiro
+  pushSyncMsg({ type:'inst_chat', instancia: inst, role: state.myRole, sender: state.myName, text });
+
+  // Juiz responde ao chat de instância ocasionalmente
+  if (instChatMsgs[inst].length % 2 === 0) {
+    setTimeout(()=>judgeInstIntervene(inst), 1000);
+  }
+}
+
+function appendInstChatMsg(inst, role, sender, text, isMine) {
+  const el = document.getElementById(`inst-chat-msgs-${inst}`);
+  if (!el) return;
+  const roleLabel = role==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  const color = role==='acusacao'?'var(--red2)':'var(--blue2)';
+  const div = document.createElement('div');
+  div.style.cssText = `padding:7px 10px;border-radius:8px;border:1px solid ${role==='acusacao'?'rgba(201,64,64,.2)':'rgba(58,110,201,.2)'};background:${role==='acusacao'?'var(--red-d)':'var(--blue-d)'};font-size:12.5px;line-height:1.5;`;
+  div.innerHTML = `<div style="font-family:var(--mono);font-size:9px;color:${color};margin-bottom:4px;">${roleLabel} · ${sender}</div><div style="color:var(--text2);font-weight:300;">${text}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function judgeInstIntervene(inst) {
+  const c = CASES[state.caseIdx];
+  const msgs = instChatMsgs[inst] || [];
+  const el = document.getElementById(`inst-chat-msgs-${inst}`);
+  if (!el) return;
+
+  const instLabel = inst==='tj'?'Tribunal de Justiça':'STJ';
+  const fallbacks = {
+    tj: ['O Tribunal de Justiça pondera: a questão de mérito não foi totalmente esgotada em 1ª instância?', 'Há jurisprudência específica que fundamente a reforma pleiteada?'],
+    stj: ['O STJ só analisa questões de direito. Qual violação específica de lei federal está sendo apontada?', 'Existe súmula do STJ sobre o ponto discutido? Isso é determinante.'],
+  };
+
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    const fb = fallbacks[inst] || fallbacks.tj;
+    const div = document.createElement('div');
+    div.className = 'inst-msg-j';
+    div.textContent = '⚖️ ' + fb[Math.floor(Math.random()*fb.length)];
+    el.appendChild(div); el.scrollTop = el.scrollHeight;
+    return;
+  }
+
+  try {
+    const recentDebate = msgs.slice(-4).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+    const text = await callGemini(
+      `Você é ${instLabel}. Faça UMA intervenção brevíssima (1 linha) sobre os novos argumentos apresentados pelas partes. Seja preciso e jurídico.`,
+      `${c.context_juiz}\n\nNovos argumentos para ${instLabel}:\n${recentDebate}`,
+      180
+    );
+    if (text) {
+      const div = document.createElement('div');
+      div.className = 'inst-msg-j';
+      div.textContent = '⚖️ ' + text;
+      el.appendChild(div); el.scrollTop = el.scrollHeight;
+      // Sincroniza mensagem do juiz de instância (como sys)
+      pushSyncMsg({ type:'sys', text: `⚖️ [${instLabel}] ${text}` });
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// BLOCO DE NOTAS (localStorage, individual)
+// ═══════════════════════════════════════════════════════
+let notasSaveTimer = null;
+
+function loadNotas() {
+  const key = `tribunal_notas_${state.myName}_${state.roomCode}`;
+  const saved = localStorage.getItem(key) || '';
+  const ta = document.getElementById('notas-ta');
+  if (ta) {
+    ta.value = saved;
+    document.getElementById('notas-chars').textContent = saved.length + ' caracteres';
+  }
+}
+
+function onNotasInput() {
+  const ta = document.getElementById('notas-ta');
+  const text = ta.value;
+  document.getElementById('notas-chars').textContent = text.length + ' caracteres';
+  clearTimeout(notasSaveTimer);
+  notasSaveTimer = setTimeout(()=>{
+    const key = `tribunal_notas_${state.myName}_${state.roomCode}`;
+    localStorage.setItem(key, text);
+    const saved = document.getElementById('notas-saved');
+    saved.classList.add('show');
+    setTimeout(()=>saved.classList.remove('show'), 1800);
+  }, 600);
+}
+
+function clearNotas() {
+  if (!confirm('Limpar todas as notas?')) return;
+  const ta = document.getElementById('notas-ta');
+  ta.value = '';
+  document.getElementById('notas-chars').textContent = '0 caracteres';
+  const key = `tribunal_notas_${state.myName}_${state.roomCode}`;
+  localStorage.removeItem(key);
 }
 
 // ═══════════════════════════════════════════════════════
