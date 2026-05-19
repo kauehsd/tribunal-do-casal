@@ -3,10 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tribunal do Casal ⚖️</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Fontes não bloqueiam renderização -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
 <style>
 :root {
   --bg: #08080e;
@@ -19,9 +24,9 @@
   --green: #3ab87a; --green2: #5ad49a; --green-d: rgba(58,184,122,0.08);
   --purple: #7a52c9; --purple2: #9a72e8; --purple-d: rgba(122,82,201,0.08);
   --text: #e8e4d8; --text2: #8a8478; --text3: #48443c;
-  --mono: 'IBM Plex Mono', monospace;
-  --serif: 'Playfair Display', serif;
-  --sans: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --bottombar: 64px;
@@ -689,8 +694,23 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
 </div><!-- /s-game -->
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Firebase carregado de forma não-bloqueante -->
+<script>
+(function() {
+  function loadScript(src, cb) {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = cb || function(){};
+    s.onerror = function(){ console.warn('Firebase script falhou:', src); if(cb) cb(); };
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function() {
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js', function() {
+      window._firebaseReady = true;
+    });
+  });
+})();
+</script>
 <script>
 // ═══════════════════════════════════════════════════════
 // FIREBASE CONFIG
@@ -926,20 +946,27 @@ let db = null, roomRef = null, messagesRef = null;
 // ═══════════════════════════════════════════════════════
 function initFirebase() {
   try {
+    if (typeof firebase === 'undefined' || !window._firebaseReady) return false;
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     db = firebase.database();
     return true;
-  } catch(e) { console.error('Firebase:', e); return false; }
+  } catch(e) {
+    console.warn('Firebase:', e);
+    return false;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
 // LOBBY
 // ═══════════════════════════════════════════════════════
 function initLobby() {
-  if (!initFirebase()) { alert('Erro ao conectar ao Firebase!'); return; }
+  // Sempre mostra o lobby — Firebase é opcional
+  try { initFirebase(); } catch(e) { console.warn('Firebase offline:', e); }
   const scroll = document.getElementById('case-scroll');
-  scroll.innerHTML = CASES.map((c,i)=>`
-    <div class="case-chip ${i===0?'active':''}" onclick="selectCase(${i})">${c.id} · ${c.nome}</div>`).join('');
+  if (scroll) {
+    scroll.innerHTML = CASES.map((c,i)=>`
+      <div class="case-chip ${i===0?'active':''}" onclick="selectCase(${i})">${c.id} · ${c.nome}</div>`).join('');
+  }
   initApiKeyUI();
 }
 
@@ -967,6 +994,22 @@ async function createRoom() {
   if (!state.createRole) { alert('Escolha seu papel!'); return; }
   const btn = document.getElementById('btn-create');
   btn.disabled = true; btn.textContent = 'CRIANDO...';
+
+  // Tenta inicializar Firebase (precisa de internet)
+  const firebaseOk = initFirebase();
+  if (!firebaseOk) {
+    btn.disabled = false; btn.textContent = 'CRIAR SALA';
+    const goSolo = confirm('⚠️ Sem conexão com o servidor (Firebase).\n\nVocê pode jogar em modo solo (sem parceiro). Deseja continuar?');
+    if (goSolo) {
+      state.myName = name; state.myRole = state.createRole;
+      state.roomCode = 'SOLO'; state.solo = true;
+      state.partnerName = state.myRole==='acusacao'?'Defesa':'Acusação';
+      state.partnerRole = state.myRole==='acusacao'?'defesa':'acusacao';
+      launchGame();
+    }
+    return;
+  }
+
   state.myName = name; state.myRole = state.createRole;
   state.roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
   roomRef = db.ref(`rooms/${state.roomCode}`);
@@ -1892,7 +1935,11 @@ function generateFallbackVerdict(c, scoreAcu, scoreDef, instancia) {
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-initLobby();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLobby);
+} else {
+  initLobby();
+}
 </script>
 </body>
 </html>
