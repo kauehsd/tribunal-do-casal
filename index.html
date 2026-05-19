@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tribunal do Casal ⚖️</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -23,6 +24,7 @@
   --sans: 'Plus Jakarta Sans', sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  --bottombar: 64px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth;}
@@ -32,7 +34,7 @@ body::before{content:'';position:fixed;inset:0;background:
   radial-gradient(ellipse 50% 50% at 80% 100%, rgba(58,110,201,0.04) 0%, transparent 70%);
   pointer-events:none;z-index:0;}
 
-/* SCREENS */
+/* ══ SCREENS ══ */
 .screen{display:none;position:relative;z-index:1;}
 .screen.active{display:block;}
 #s-lobby.active{display:flex;}
@@ -43,9 +45,19 @@ body::before{content:'';position:fixed;inset:0;background:
 .lobby-title{font-family:var(--serif);font-size:clamp(52px,11vw,96px);font-weight:900;line-height:.95;letter-spacing:-.03em;margin-bottom:8px;}
 .lobby-title em{font-style:italic;color:var(--gold2);}
 .lobby-sub{color:var(--text2);font-size:14px;font-weight:300;margin-bottom:48px;line-height:1.6;}
-
 .lobby-card{width:100%;max-width:480px;background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:28px;margin-bottom:20px;}
 .lc-title{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:16px;}
+
+/* API key section */
+.apikey-row{display:flex;gap:8px;margin-bottom:12px;}
+.apikey-inp{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:12px;letter-spacing:.04em;outline:none;transition:border-color .18s;}
+.apikey-inp:focus{border-color:var(--gold);}
+.apikey-inp::placeholder{color:var(--text3);font-size:11px;}
+.apikey-hint{font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.5;margin-bottom:16px;text-align:left;padding:10px 12px;background:var(--s2);border-radius:8px;border:1px solid var(--b1);}
+.apikey-hint a{color:var(--gold2);text-decoration:none;}
+.apikey-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;padding:6px 10px;border-radius:6px;margin-bottom:12px;}
+.apikey-status.ok{background:var(--green-d);color:var(--green2);border:1px solid rgba(58,184,122,.2);}
+.apikey-status.no{background:var(--red-d);color:var(--red2);border:1px solid rgba(201,64,64,.2);}
 
 /* Case selector */
 .case-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;padding-bottom:4px;}
@@ -69,12 +81,10 @@ body::before{content:'';position:fixed;inset:0;background:
 .role-chip.r-def .rc-name{color:var(--blue2);}
 .role-chip .rc-desc{font-size:11px;color:var(--text3);line-height:1.4;margin-top:4px;}
 
-/* Name input */
+/* Inputs */
 .name-inp{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 16px;color:var(--text);font-family:var(--sans);font-size:15px;outline:none;transition:border-color .18s;margin-bottom:12px;}
 .name-inp:focus{border-color:var(--gold);}
 .name-inp::placeholder{color:var(--text3);}
-
-/* Room code */
 .room-row{display:flex;gap:8px;margin-bottom:12px;}
 .room-inp{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 16px;color:var(--text);font-family:var(--mono);font-size:18px;letter-spacing:.15em;text-transform:uppercase;outline:none;transition:border-color .18s;text-align:center;}
 .room-inp:focus{border-color:var(--gold);}
@@ -85,11 +95,9 @@ body::before{content:'';position:fixed;inset:0;background:
 .btn-primary:disabled{opacity:.4;transform:none;cursor:not-allowed;}
 .btn-secondary{width:100%;padding:12px;border-radius:10px;border:1px solid var(--b2);background:none;color:var(--text2);font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .18s;margin-top:8px;}
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold);}
-
 .divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
 .divider span{font-family:var(--mono);font-size:10px;color:var(--text3);}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--b1);}
-
 .generated-code{background:var(--s2);border:1px solid var(--gold);border-radius:10px;padding:14px;text-align:center;margin-bottom:12px;}
 .gc-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:4px;}
 .gc-code{font-family:var(--mono);font-size:32px;color:var(--gold2);letter-spacing:.2em;font-weight:500;}
@@ -103,62 +111,97 @@ body::before{content:'';position:fixed;inset:0;background:
 .players-list{display:flex;flex-direction:column;gap:6px;}
 .player-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);}
 .pi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.pi-dot.acu{background:var(--red2);}
-.pi-dot.def{background:var(--blue2);}
+.pi-dot.acusacao{background:var(--red2);}
+.pi-dot.defesa{background:var(--blue2);}
 .pi-dot.empty{background:var(--b2);}
 .pi-name{font-size:13px;flex:1;}
 .pi-role{font-family:var(--mono);font-size:9px;color:var(--text3);}
 
 /* ══ GAME SCREEN ══ */
-#s-game{min-height:100vh;display:flex;flex-direction:column;}
-.game-topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;padding-top:calc(10px + var(--safe-t));border-bottom:1px solid var(--b1);background:rgba(8,8,14,.96);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
-.gtb-back{background:none;border:1px solid var(--b1);border-radius:8px;padding:7px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
+#s-game{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* Top bar */
+.game-topbar{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  padding-top:calc(10px + var(--safe-t));
+  border-bottom:1px solid var(--b1);
+  background:rgba(8,8,14,.97);
+  backdrop-filter:blur(16px);
+  flex-shrink:0;
+  z-index:100;
+}
+.gtb-back{background:none;border:1px solid var(--b1);border-radius:8px;padding:7px 12px;color:var(--text3);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;flex-shrink:0;}
 .gtb-back:hover{border-color:var(--b2);color:var(--text2);}
-.gtb-case{font-family:var(--mono);font-size:10px;color:var(--text3);display:none;}
-@media(min-width:480px){.gtb-case{display:block;}}
 .gtb-title{font-family:var(--serif);font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gtb-badge{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:100px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;flex-shrink:0;}
-.gtb-badge.acu{background:var(--red-d);color:var(--red2);border:1px solid rgba(201,64,64,.25);}
-.gtb-badge.def{background:var(--blue-d);color:var(--blue2);border:1px solid rgba(58,110,201,.25);}
-.online-dot{width:6px;height:6px;border-radius:50%;background:var(--green2);animation:pulse 2s infinite;}
+.gtb-badge.acusacao{background:var(--red-d);color:var(--red2);border:1px solid rgba(201,64,64,.25);}
+.gtb-badge.defesa{background:var(--blue-d);color:var(--blue2);border:1px solid rgba(58,110,201,.25);}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--green2);animation:pulse 2s infinite;flex-shrink:0;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-/* Tab bar */
-.tab-bar{display:flex;background:rgba(8,8,14,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);overflow-x:auto;scrollbar-width:none;position:sticky;top:52px;z-index:99;}
-.tab-bar::-webkit-scrollbar{display:none;}
-.tab-btn{padding:10px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.07em;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;min-height:44px;flex-shrink:0;display:flex;align-items:center;gap:5px;}
-.tab-btn:hover{color:var(--text2);}
-.tab-btn.active{color:var(--gold2);border-bottom-color:var(--gold);}
-.tab-btn .notif{width:6px;height:6px;border-radius:50%;background:var(--red2);display:none;}
-.tab-btn .notif.show{display:inline-block;}
-
-.tab-panel{display:none;}
+/* Content area */
+.game-content{flex:1;overflow:hidden;position:relative;}
+.tab-panel{display:none;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .tab-panel.active{display:flex;flex-direction:column;animation:fadeUp .22s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-/* Game body */
-.game-body{flex:1;max-width:900px;width:100%;margin:0 auto;padding:16px 14px calc(32px + var(--safe-b));}
+/* Bottom Tab Bar — app style */
+.bottom-bar{
+  display:flex;
+  background:rgba(8,8,14,.97);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--b1);
+  padding-bottom:var(--safe-b);
+  flex-shrink:0;
+  z-index:100;
+}
+.btab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px 4px;min-height:56px;
+  background:none;border:none;
+  color:var(--text3);font-family:var(--mono);font-size:9px;letter-spacing:.04em;
+  cursor:pointer;transition:all .18s;position:relative;gap:4px;
+}
+.btab:hover{color:var(--text2);}
+.btab.active{color:var(--gold2);}
+.btab-icon{font-size:18px;line-height:1;position:relative;}
+.btab-notif{
+  position:absolute;top:-3px;right:-6px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--red2);display:none;
+  border:1.5px solid var(--bg);
+}
+.btab-notif.show{display:block;}
+.btab-label{font-size:9px;letter-spacing:.04em;}
+.btab-indicator{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:0;height:2px;background:var(--gold);border-radius:0 0 2px 2px;
+  transition:width .2s;
+}
+.btab.active .btab-indicator{width:28px;}
+
+/* Game body scroll area */
+.game-body{padding:16px 14px 24px;max-width:900px;width:100%;margin:0 auto;}
 
 /* Cards */
 .card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:20px;margin-bottom:12px;}
 .card-sm{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px;margin-bottom:8px;}
 .section-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .section-lbl::after{content:'';flex:1;height:1px;background:var(--b1);}
-
 .brief-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
 .tag{padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;border:1px solid;}
 .tg{border-color:var(--gold);color:var(--gold2);background:var(--gold-d);}
 .tr{border-color:var(--red);color:var(--red2);background:var(--red-d);}
 .tb{border-color:var(--blue);color:var(--blue2);background:var(--blue-d);}
 .tp{border-color:var(--purple);color:var(--purple2);background:var(--purple-d);}
-
 .brief-title{font-family:var(--serif);font-size:clamp(18px,3.5vw,26px);font-weight:700;margin-bottom:10px;}
 .brief-body{font-size:13.5px;line-height:1.78;color:var(--text2);font-weight:300;}
 .brief-body strong{color:var(--text);font-weight:500;}
 
-/* Art quick cards */
+/* Art cards */
 .art-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
-@media(max-width:500px){.art-grid{grid-template-columns:1fr;}}
+@media(max-width:400px){.art-grid{grid-template-columns:1fr;}}
 .art-card{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px;cursor:pointer;transition:all .18s;}
 .art-card:hover{border-color:var(--b2);background:var(--s3);}
 .art-card.expanded{border-color:var(--gold);background:var(--gold-d);}
@@ -175,50 +218,42 @@ body::before{content:'';position:fixed;inset:0;background:
 .art-use-btn:hover{background:rgba(201,149,58,.16);}
 
 /* ══ CHAT ══ */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 120px);max-height:700px;}
-.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+#tab-chat{display:none;flex-direction:column;}
+#tab-chat.active{display:flex;}
+.chat-messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
 .chat-messages::-webkit-scrollbar{width:4px;}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-
 .msg{display:flex;flex-direction:column;max-width:85%;animation:fadeUp .2s ease;}
 .msg.mine{align-self:flex-end;align-items:flex-end;}
 .msg.theirs{align-self:flex-start;align-items:flex-start;}
 .msg.judge{align-self:center;align-items:center;max-width:95%;}
-
 .msg-header{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
 .msg-role{font-family:var(--mono);font-size:9px;letter-spacing:.08em;}
-.msg-role.acu{color:var(--red2);}
-.msg-role.def{color:var(--blue2);}
+.msg-role.acusacao{color:var(--red2);}
+.msg-role.defesa{color:var(--blue2);}
 .msg-role.juiz{color:var(--gold2);}
 .msg-time{font-family:var(--mono);font-size:9px;color:var(--text3);}
-
 .msg-bubble{padding:11px 14px;border-radius:12px;font-size:13.5px;line-height:1.6;font-weight:300;word-break:break-word;}
 .msg.mine .msg-bubble{background:var(--s3);border:1px solid var(--b2);border-bottom-right-radius:4px;}
 .msg.theirs .msg-bubble{background:var(--s2);border:1px solid var(--b1);border-bottom-left-radius:4px;}
-.msg.mine.acu .msg-bubble{background:var(--red-d);border-color:rgba(201,64,64,.2);}
-.msg.mine.def .msg-bubble{background:var(--blue-d);border-color:rgba(58,110,201,.2);}
+.msg.mine.acusacao .msg-bubble{background:var(--red-d);border-color:rgba(201,64,64,.2);}
+.msg.mine.defesa .msg-bubble{background:var(--blue-d);border-color:rgba(58,110,201,.2);}
 .msg.judge .msg-bubble{background:linear-gradient(135deg,rgba(201,149,58,.08),rgba(201,149,58,.04));border:1px solid rgba(201,149,58,.25);border-radius:12px;width:100%;text-align:center;}
 .msg-art-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:9px;background:rgba(201,149,58,.1);border:1px solid rgba(201,149,58,.2);color:var(--gold2);margin-top:6px;}
-
-/* System messages */
 .sys-msg{text-align:center;font-family:var(--mono);font-size:10px;color:var(--text3);padding:6px 0;letter-spacing:.06em;}
-
-/* Chat input */
-.chat-input-wrap{padding:12px 14px;border-top:1px solid var(--b1);background:rgba(8,8,14,.95);backdrop-filter:blur(12px);}
+.chat-input-wrap{padding:10px 12px;border-top:1px solid var(--b1);background:rgba(8,8,14,.95);backdrop-filter:blur(12px);flex-shrink:0;}
 .art-quick-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;padding-bottom:2px;}
 .art-quick-row::-webkit-scrollbar{display:none;}
 .art-quick-pill{flex-shrink:0;padding:5px 10px;border-radius:6px;border:1px solid var(--b2);background:none;color:var(--text3);font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .art-quick-pill:hover{border-color:var(--gold);color:var(--gold2);background:var(--gold-d);}
 .chat-row{display:flex;gap:8px;}
-.chat-inp{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;resize:none;min-height:48px;max-height:120px;transition:border-color .18s;}
+.chat-inp{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;resize:none;min-height:48px;max-height:100px;transition:border-color .18s;}
 .chat-inp:focus{border-color:var(--gold);}
 .chat-inp::placeholder{color:var(--text3);}
-.chat-send{padding:0 18px;border-radius:10px;border:none;background:var(--gold);color:#1a1000;font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .18s;min-height:48px;flex-shrink:0;font-weight:500;}
+.chat-send{padding:0 16px;border-radius:10px;border:none;background:var(--gold);color:#1a1000;font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .18s;min-height:48px;flex-shrink:0;font-weight:500;}
 .chat-send:hover{background:var(--gold2);}
 .chat-send:disabled{opacity:.4;cursor:not-allowed;}
-
-/* Typing indicator */
-.typing-ind{font-family:var(--mono);font-size:10px;color:var(--gold2);padding:4px 14px;display:none;}
+.typing-ind{font-family:var(--mono);font-size:10px;color:var(--gold2);padding:4px 14px;display:none;flex-shrink:0;}
 .typing-ind.show{display:block;}
 .typing-dots{display:inline-flex;gap:3px;}
 .typing-dots span{width:4px;height:4px;border-radius:50%;background:var(--gold2);animation:dot-blink 1.2s infinite;}
@@ -238,7 +273,6 @@ body::before{content:'';position:fixed;inset:0;background:
 .cp-val.v1{color:var(--gold2);}
 .cp-val.v2{color:var(--gold);}
 .cp-val.v3{color:var(--green2);}
-
 .slider-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .slider-lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);}
 .slider-val{font-family:var(--mono);font-size:11px;color:var(--gold2);}
@@ -246,9 +280,8 @@ input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2p
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--gold);cursor:pointer;transition:transform .15s;}
 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15);}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--gold);cursor:pointer;border:none;}
-
 .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;}
-@media(max-width:500px){.check-grid{grid-template-columns:1fr;}}
+@media(max-width:400px){.check-grid{grid-template-columns:1fr;}}
 .chk-item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;transition:all .18s;}
 .chk-item:hover{border-color:var(--b2);}
 .chk-item.on-agg{border-color:rgba(201,64,64,.4);background:var(--red-d);}
@@ -260,34 +293,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chk-ef{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;}
 .chk-item.on-agg .chk-ef{color:var(--red2);}
 .chk-item.on-ate .chk-ef{color:var(--green2);}
-
-/* ══ VEREDITO ══ */
-.verdict-locked{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:36px 24px;text-align:center;margin-bottom:12px;}
-.vl-icon{font-size:56px;margin-bottom:14px;display:block;}
-.vl-title{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--gold2);margin-bottom:8px;}
-.vl-sub{font-size:13px;color:var(--text3);font-weight:300;line-height:1.6;margin-bottom:24px;max-width:340px;margin-left:auto;margin-right:auto;}
-.btn-reveal{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border-radius:12px;border:1px solid var(--gold);background:var(--gold-d);color:var(--gold2);font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .2s;min-height:48px;}
-.btn-reveal:hover{background:rgba(201,149,58,.16);transform:translateY(-2px);box-shadow:0 0 32px rgba(201,149,58,.15);}
-.ai-loading{display:none;margin-top:16px;}
-.ai-loading.show{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--gold2);}
-
-.verdict-card{background:var(--s1);border:1px solid rgba(201,149,58,.3);border-radius:16px;padding:24px;margin-bottom:12px;animation:unveil .5s ease;}
-@keyframes unveil{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
-.verdict-stamp{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--b1);}
-.vs-icon{font-size:32px;}
-.vs-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;margin-bottom:3px;}
-.vs-name{font-family:var(--serif);font-size:24px;font-weight:700;}
-.vs-name.cond{color:var(--red2);}
-.vs-name.absol{color:var(--green2);}
-.vs-name.parc{color:var(--gold2);}
-.verdict-pena{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
-.vp-num{font-family:var(--serif);font-size:40px;font-weight:900;color:var(--gold2);margin-bottom:2px;}
-.vp-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);}
-.verdict-ratio{font-family:var(--serif);font-size:14px;color:var(--text2);font-style:italic;line-height:1.75;margin-bottom:14px;border-left:2px solid rgba(201,149,58,.3);padding-left:14px;}
-.verdict-fund{font-size:13px;color:var(--text2);font-weight:300;line-height:1.7;}
-.verdict-fund strong{color:var(--text);font-weight:500;}
-.verdict-arts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
-.vart{padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;border:1px solid rgba(201,149,58,.25);color:var(--gold2);background:rgba(201,149,58,.06);}
 
 /* Score */
 .score-row{display:flex;gap:8px;margin-bottom:10px;}
@@ -307,7 +312,104 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .score-btn.def:hover{background:var(--blue-d);}
 .score-btn.rst{color:var(--text3);max-width:52px;flex:0 0 52px;}
 
-/* ══ UTILS ══ */
+/* ══ VEREDITO ══ */
+.verdict-locked{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:32px 24px;text-align:center;margin-bottom:12px;}
+.vl-icon{font-size:48px;margin-bottom:12px;display:block;}
+.vl-title{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--gold2);margin-bottom:8px;}
+.vl-sub{font-size:13px;color:var(--text3);font-weight:300;line-height:1.6;margin-bottom:20px;max-width:340px;margin-left:auto;margin-right:auto;}
+
+/* Pena dos jogadores */
+.player-pena-section{margin-bottom:20px;text-align:left;}
+.pp-title{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;}
+.pp-row{display:flex;gap:8px;margin-bottom:8px;}
+.pp-side{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;}
+.pp-side.acu{border-color:rgba(201,64,64,.2);}
+.pp-side.def{border-color:rgba(58,110,201,.2);}
+.pp-label{font-family:var(--mono);font-size:9px;margin-bottom:6px;}
+.pp-label.acu{color:var(--red2);}
+.pp-label.def{color:var(--blue2);}
+.pp-inp{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:7px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s;}
+.pp-inp.acu:focus{border-color:var(--red);}
+.pp-inp.def:focus{border-color:var(--blue);}
+.pp-inp::placeholder{color:var(--text3);font-size:11px;}
+
+.btn-reveal{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border-radius:12px;border:1px solid var(--gold);background:var(--gold-d);color:var(--gold2);font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .2s;min-height:48px;}
+.btn-reveal:hover{background:rgba(201,149,58,.16);transform:translateY(-2px);box-shadow:0 0 32px rgba(201,149,58,.15);}
+.btn-reveal:disabled{opacity:.4;transform:none;cursor:not-allowed;}
+.ai-loading{display:none;margin-top:16px;}
+.ai-loading.show{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--gold2);}
+
+/* Instâncias nav */
+.inst-nav{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;}
+.inst-nav::-webkit-scrollbar{display:none;}
+.inst-btn{flex-shrink:0;padding:8px 14px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);color:var(--text3);font-family:var(--mono);font-size:9px;letter-spacing:.06em;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.inst-btn:hover{border-color:var(--b2);color:var(--text2);}
+.inst-btn.active{border-color:var(--gold);color:var(--gold2);background:var(--gold-d);}
+.inst-btn.locked{opacity:.35;cursor:not-allowed;}
+.inst-btn .inst-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.inst-btn.active .inst-dot{background:var(--gold2);}
+.inst-btn.done-cond .inst-dot{background:var(--red2);}
+.inst-btn.done-absol .inst-dot{background:var(--green2);}
+.inst-btn.done-parc .inst-dot{background:var(--gold2);}
+
+/* Recurso */
+.recurso-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--b1);}
+.recurso-title{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;margin-bottom:10px;}
+.recurso-btns{display:flex;gap:8px;}
+.btn-recurso{flex:1;padding:11px;border-radius:10px;border:1px solid;font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .18s;min-height:44px;}
+.btn-recurso.acu{border-color:rgba(201,64,64,.3);color:var(--red2);background:none;}
+.btn-recurso.acu:hover{background:var(--red-d);}
+.btn-recurso.def{border-color:rgba(58,110,201,.3);color:var(--blue2);background:none;}
+.btn-recurso.def:hover{background:var(--blue-d);}
+.btn-recurso:disabled{opacity:.35;cursor:not-allowed;}
+
+/* Recurso input */
+.recurso-input-wrap{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px;margin-top:12px;animation:fadeUp .2s ease;}
+.ri-label{font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-bottom:8px;}
+.ri-label.acu{color:var(--red2);}
+.ri-label.def{color:var(--blue2);}
+.ri-ta{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;resize:none;outline:none;min-height:80px;transition:border-color .15s;margin-bottom:10px;}
+.ri-ta:focus{border-color:var(--gold);}
+.ri-ta::placeholder{color:var(--text3);}
+.btn-enviar-recurso{width:100%;padding:12px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1000;font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:pointer;transition:all .18s;font-weight:500;}
+.btn-enviar-recurso:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,149,58,.2);}
+.btn-enviar-recurso:disabled{opacity:.4;transform:none;cursor:not-allowed;}
+
+/* Verdict card */
+@keyframes unveil{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+.verdict-card{background:var(--s1);border-radius:16px;padding:24px;margin-bottom:12px;animation:unveil .5s ease;}
+.verdict-card.inst-1a{border:1px solid rgba(201,149,58,.3);}
+.verdict-card.inst-tj{border:1px solid rgba(58,110,201,.3);}
+.verdict-card.inst-stj{border:1px solid rgba(122,82,201,.3);}
+.verdict-stamp{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--b1);}
+.vs-icon{font-size:30px;}
+.vs-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;margin-bottom:3px;}
+.vs-name{font-family:var(--serif);font-size:22px;font-weight:700;}
+.vs-name.cond{color:var(--red2);}
+.vs-name.absol{color:var(--green2);}
+.vs-name.parc{color:var(--gold2);}
+.verdict-pena{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 16px;margin-bottom:14px;}
+.vp-num{font-family:var(--serif);font-size:30px;font-weight:900;color:var(--gold2);margin-bottom:2px;line-height:1.1;}
+.vp-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.verdict-ratio{font-family:var(--serif);font-size:13.5px;color:var(--text2);font-style:italic;line-height:1.75;margin-bottom:14px;border-left:2px solid rgba(201,149,58,.3);padding-left:14px;}
+.verdict-fund{font-size:13px;color:var(--text2);font-weight:300;line-height:1.7;margin-bottom:12px;}
+.verdict-fund strong{color:var(--text);font-weight:500;}
+.verdict-arts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.vart{padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;border:1px solid rgba(201,149,58,.25);color:var(--gold2);background:rgba(201,149,58,.06);}
+
+/* Argumento do recurso exibido */
+.recurso-arg{background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:12px;border-left:3px solid;}
+.recurso-arg.acu{border-color:var(--red);}
+.recurso-arg.def{border-color:var(--blue);}
+.recurso-arg-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.07em;margin-bottom:6px;}
+.recurso-arg-lbl.acu{color:var(--red2);}
+.recurso-arg-lbl.def{color:var(--blue2);}
+.recurso-arg-txt{font-size:12.5px;color:var(--text2);line-height:1.6;font-weight:300;}
+
+/* Nokey warning */
+.nokey-warn{background:rgba(201,64,64,.06);border:1px solid rgba(201,64,64,.2);border-radius:10px;padding:14px;margin-bottom:14px;font-family:var(--mono);font-size:10px;color:var(--red2);line-height:1.6;text-align:left;}
+.nokey-warn a{color:var(--gold2);text-decoration:none;}
+
 .divhr{height:1px;background:var(--b1);margin:14px 0;}
 </style>
 </head>
@@ -319,13 +421,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <h1 class="lobby-title">Tribunal<br><em>do Casal</em></h1>
   <p class="lobby-sub">Debata casos reais com seu parceiro.<br>O Juiz IA lê tudo e dá o veredito.</p>
 
+  <!-- API KEY -->
+  <div class="lobby-card" style="max-width:480px;">
+    <div class="lc-title">// juiz ia — chave gemini (grátis)</div>
+    <div id="apikey-status-box" style="display:none;"></div>
+    <div class="apikey-row">
+      <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
+    </div>
+    <div class="apikey-hint">
+      🆓 Use o <strong style="color:var(--gold2)">Google Gemini — é grátis!</strong><br>
+      1. Acesse <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com →</a><br>
+      2. Clique em <strong>Get API Key → Create API Key</strong><br>
+      3. Cole aqui a chave (começa com <strong>AIza</strong>)<br><br>
+      🔒 A chave fica só na memória desta sessão, nunca sai do dispositivo.<br>
+      Sem chave o Juiz usa respostas fixas de fallback.
+    </div>
+  </div>
+
   <!-- CRIAR SALA -->
   <div class="lobby-card" id="card-create">
     <div class="lc-title">// criar sala</div>
-
     <div class="lc-title" style="margin-bottom:8px;">caso</div>
     <div class="case-scroll" id="case-scroll"></div>
-
     <div class="lc-title" style="margin-bottom:8px;">seu papel</div>
     <div class="role-grid">
       <div class="role-chip r-acu" id="rc-acu" onclick="selectRole('acusacao')">
@@ -339,16 +456,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="rc-desc">Construa teses e proteja o réu</div>
       </div>
     </div>
-
     <input class="name-inp" id="inp-name-create" type="text" placeholder="Seu nome" maxlength="20">
-
     <div id="code-display" style="display:none;">
       <div class="generated-code">
         <div class="gc-label">CÓDIGO DA SALA — manda pro seu parceiro</div>
         <div class="gc-code" id="room-code-display">----</div>
       </div>
     </div>
-
     <button class="btn-primary" id="btn-create" onclick="createRoom()">CRIAR SALA</button>
   </div>
 
@@ -357,7 +471,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <!-- ENTRAR EM SALA -->
   <div class="lobby-card" id="card-join">
     <div class="lc-title">// entrar em sala existente</div>
-
     <div class="lc-title" style="margin-bottom:8px;">seu papel</div>
     <div class="role-grid">
       <div class="role-chip r-acu" id="rj-acu" onclick="selectJoinRole('acusacao')">
@@ -371,7 +484,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="rc-desc">Construa teses e proteja o réu</div>
       </div>
     </div>
-
     <input class="name-inp" id="inp-name-join" type="text" placeholder="Seu nome" maxlength="20">
     <div class="room-row">
       <input class="room-inp" id="inp-room-code" type="text" placeholder="CÓDIGO DA SALA" maxlength="4">
@@ -397,42 +509,36 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
 <!-- ══ GAME ══ -->
 <div id="s-game" class="screen">
+
+  <!-- Top bar -->
   <div class="game-topbar">
     <button class="gtb-back" onclick="backToLobby()">← SAIR</button>
-    <span class="gtb-case" id="gtb-case"></span>
-    <span style="color:var(--b2);display:none;" id="gtb-sep">·</span>
     <span class="gtb-title" id="gtb-title"></span>
     <span class="gtb-badge" id="gtb-badge"><span class="online-dot"></span><span id="gtb-role-txt"></span></span>
   </div>
 
-  <div class="tab-bar" id="main-tab-bar">
-    <button class="tab-btn active" onclick="showTab('caso')" data-tab="caso">📋 CASO</button>
-    <button class="tab-btn" onclick="showTab('chat')" data-tab="chat">💬 DEBATE <span class="notif" id="chat-notif"></span></button>
-    <button class="tab-btn" onclick="showTab('vade')" data-tab="vade">📖 LEIS</button>
-    <button class="tab-btn" onclick="showTab('calc')" data-tab="calc">🧮 PENA</button>
-    <button class="tab-btn" onclick="showTab('veredito')" data-tab="veredito">⚖️ VEREDITO</button>
-  </div>
+  <!-- Content panels -->
+  <div class="game-content">
 
-  <!-- TAB CASO -->
-  <div class="tab-panel active" id="tab-caso">
-    <div class="game-body">
-      <div class="card">
-        <div class="brief-tags" id="g-tags"></div>
-        <div class="brief-title" id="g-title"></div>
-        <div class="brief-body" id="g-body"></div>
-      </div>
-      <div class="section-lbl" id="g-guide-lbl">// pontos para pensar</div>
-      <div id="g-guide"></div>
-      <div class="card" style="margin-top:12px;">
-        <div class="section-lbl">// pontos polêmicos do debate</div>
-        <div id="g-hot"></div>
+    <!-- TAB CASO -->
+    <div class="tab-panel active" id="tab-caso">
+      <div class="game-body">
+        <div class="card">
+          <div class="brief-tags" id="g-tags"></div>
+          <div class="brief-title" id="g-title"></div>
+          <div class="brief-body" id="g-body"></div>
+        </div>
+        <div class="section-lbl" id="g-guide-lbl">// pontos para pensar</div>
+        <div id="g-guide"></div>
+        <div class="card" style="margin-top:12px;">
+          <div class="section-lbl">// pontos polêmicos do debate</div>
+          <div id="g-hot"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB CHAT -->
-  <div class="tab-panel" id="tab-chat">
-    <div class="chat-wrap">
+    <!-- TAB CHAT -->
+    <div class="tab-panel" id="tab-chat">
       <div class="chat-messages" id="chat-messages">
         <div class="sys-msg">⚖️ Debate iniciado — que comecem os argumentos</div>
       </div>
@@ -447,74 +553,105 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB VADE -->
-  <div class="tab-panel" id="tab-vade">
-    <div class="game-body">
-      <div class="section-lbl">// artigos relevantes — toque para expandir</div>
-      <div class="art-grid" id="vade-grid"></div>
-    </div>
-  </div>
-
-  <!-- TAB CALC -->
-  <div class="tab-panel" id="tab-calc">
-    <div class="game-body">
-      <div class="calc-display">
-        <div class="calc-big" id="calc-big">—<span> anos</span></div>
-        <div class="calc-regime" id="calc-regime">Ajuste as fases</div>
-        <div class="calc-phases">
-          <div class="calc-phase"><div class="cp-lbl">1ª FASE</div><div class="cp-val v1" id="ph1">—</div></div>
-          <div class="calc-phase"><div class="cp-lbl">2ª FASE</div><div class="cp-val v2" id="ph2">—</div></div>
-          <div class="calc-phase"><div class="cp-lbl">3ª FASE</div><div class="cp-val v3" id="ph3">—</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="slider-row">
-          <span class="slider-lbl">1ª FASE — pena-base (Art. 59)</span>
-          <span class="slider-val" id="sl-val">—</span>
-        </div>
-        <input type="range" id="sl-pb" min="0" max="100" value="50" oninput="calcPena()">
-        <div class="divhr"></div>
-        <div class="slider-lbl" style="margin-bottom:10px;">2ª FASE — agravantes / atenuantes</div>
-        <div class="check-grid" id="chk-agg"></div>
-        <div class="divhr"></div>
-        <div class="slider-lbl" style="margin-bottom:10px;">3ª FASE — causas de aumento / diminuição</div>
-        <div class="check-grid" id="chk-maj"></div>
-        <div class="divhr"></div>
-        <div class="slider-lbl" style="margin-bottom:8px;">regime inicial</div>
-        <div class="card-sm" id="regime-txt" style="font-size:12.5px;color:var(--text2);font-weight:300;line-height:1.6;"></div>
-      </div>
-
-      <!-- Placar -->
-      <div class="card" style="margin-top:4px;">
-        <div class="section-lbl">// placar do debate</div>
-        <div class="score-row">
-          <div class="score-side acu"><div class="ss-lbl acu">⚔️ acusação</div><div class="ss-num" id="sc-acu">0</div></div>
-          <div class="score-vs">vs</div>
-          <div class="score-side def"><div class="ss-lbl def">🛡️ defesa</div><div class="ss-num" id="sc-def">0</div></div>
-        </div>
-        <div class="score-btns">
-          <button class="score-btn acu" onclick="addScore('acu')">+ Ponto Acusação</button>
-          <button class="score-btn def" onclick="addScore('def')">+ Ponto Defesa</button>
-          <button class="score-btn rst" onclick="resetScore()">↺</button>
-        </div>
+    <!-- TAB VADE -->
+    <div class="tab-panel" id="tab-vade">
+      <div class="game-body">
+        <div class="section-lbl">// artigos relevantes — toque para expandir</div>
+        <div class="art-grid" id="vade-grid"></div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB VEREDITO -->
-  <div class="tab-panel" id="tab-veredito">
-    <div class="game-body">
-      <div id="verdict-wrap"></div>
+    <!-- TAB CALC -->
+    <div class="tab-panel" id="tab-calc">
+      <div class="game-body">
+        <div class="calc-display">
+          <div class="calc-big" id="calc-big">—<span> anos</span></div>
+          <div class="calc-regime" id="calc-regime">Ajuste as fases</div>
+          <div class="calc-phases">
+            <div class="calc-phase"><div class="cp-lbl">1ª FASE</div><div class="cp-val v1" id="ph1">—</div></div>
+            <div class="calc-phase"><div class="cp-lbl">2ª FASE</div><div class="cp-val v2" id="ph2">—</div></div>
+            <div class="calc-phase"><div class="cp-lbl">3ª FASE</div><div class="cp-val v3" id="ph3">—</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="slider-row">
+            <span class="slider-lbl">1ª FASE — pena-base (Art. 59)</span>
+            <span class="slider-val" id="sl-val">—</span>
+          </div>
+          <input type="range" id="sl-pb" min="0" max="100" value="50" oninput="calcPena()">
+          <div class="divhr"></div>
+          <div class="slider-lbl" style="margin-bottom:10px;">2ª FASE — agravantes / atenuantes</div>
+          <div class="check-grid" id="chk-agg"></div>
+          <div class="divhr"></div>
+          <div class="slider-lbl" style="margin-bottom:10px;">3ª FASE — causas de aumento / diminuição</div>
+          <div class="check-grid" id="chk-maj"></div>
+          <div class="divhr"></div>
+          <div class="slider-lbl" style="margin-bottom:8px;">regime inicial</div>
+          <div class="card-sm" id="regime-txt" style="font-size:12.5px;color:var(--text2);font-weight:300;line-height:1.6;"></div>
+        </div>
+        <!-- Placar -->
+        <div class="card" style="margin-top:4px;">
+          <div class="section-lbl">// placar do debate</div>
+          <div class="score-row">
+            <div class="score-side acu"><div class="ss-lbl acu">⚔️ acusação</div><div class="ss-num" id="sc-acu">0</div></div>
+            <div class="score-vs">vs</div>
+            <div class="score-side def"><div class="ss-lbl def">🛡️ defesa</div><div class="ss-num" id="sc-def">0</div></div>
+          </div>
+          <div class="score-btns">
+            <button class="score-btn acu" onclick="addScore('acu')">+ Ponto Acusação</button>
+            <button class="score-btn def" onclick="addScore('def')">+ Ponto Defesa</button>
+            <button class="score-btn rst" onclick="resetScore()">↺</button>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
+    <!-- TAB VEREDITO -->
+    <div class="tab-panel" id="tab-veredito">
+      <div class="game-body">
+        <div id="verdict-wrap"></div>
+      </div>
+    </div>
+
+  </div><!-- /game-content -->
+
+  <!-- Bottom Tab Bar -->
+  <nav class="bottom-bar">
+    <button class="btab active" onclick="showTab('caso')" data-tab="caso">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">📋</div>
+      <span class="btab-label">CASO</span>
+    </button>
+    <button class="btab" onclick="showTab('chat')" data-tab="chat">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">💬<span class="btab-notif" id="chat-notif"></span></div>
+      <span class="btab-label">DEBATE</span>
+    </button>
+    <button class="btab" onclick="showTab('vade')" data-tab="vade">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">📖</div>
+      <span class="btab-label">LEIS</span>
+    </button>
+    <button class="btab" onclick="showTab('calc')" data-tab="calc">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">🧮</div>
+      <span class="btab-label">PENA</span>
+    </button>
+    <button class="btab" onclick="showTab('veredito')" data-tab="veredito">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">⚖️</div>
+      <span class="btab-label">VEREDITO</span>
+    </button>
+  </nav>
+
+</div><!-- /s-game -->
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG — cole aqui seus valores!
+// FIREBASE CONFIG
 // ═══════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyB-ItDjYQ9uvde2ani8i284OtS8PlqCUPY",
@@ -525,6 +662,70 @@ const firebaseConfig = {
   messagingSenderId: "1035113413958",
   appId: "1:1035113413958:web:bad0cf3c0a4b7b56957947"
 };
+
+// ═══════════════════════════════════════════════════════
+// API KEY — GEMINI
+// ═══════════════════════════════════════════════════════
+let geminiKey = localStorage.getItem('tribunal_gemini_key') || '';
+
+function onApiKeyInput() {
+  const val = document.getElementById('inp-apikey').value.trim();
+  geminiKey = val;
+  const box = document.getElementById('apikey-status-box');
+  if (val.startsWith('AIza') && val.length > 20) {
+    localStorage.setItem('tribunal_gemini_key', val);
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva — Juiz IA ativo 🆓</div>';
+  } else if (val.length > 5) {
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com AIza...)</div>';
+  } else {
+    localStorage.removeItem('tribunal_gemini_key');
+    box.style.display = 'none';
+  }
+}
+
+// Preenche o input se já tiver chave salva
+function initApiKeyUI() {
+  if (geminiKey) {
+    const inp = document.getElementById('inp-apikey');
+    if (inp) {
+      inp.value = geminiKey;
+      const box = document.getElementById('apikey-status-box');
+      box.style.display = 'block';
+      box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini carregada — Juiz IA ativo 🆓 <button onclick="clearApiKey()" style="background:none;border:none;color:var(--red2);font-family:var(--mono);font-size:9px;cursor:pointer;margin-left:8px;">✕ remover</button></div>';
+    }
+  }
+}
+
+function clearApiKey() {
+  geminiKey = '';
+  localStorage.removeItem('tribunal_gemini_key');
+  const inp = document.getElementById('inp-apikey');
+  if (inp) inp.value = '';
+  const box = document.getElementById('apikey-status-box');
+  box.style.display = 'none';
+}
+
+// Função central de chamada ao Gemini
+async function callGemini(systemPrompt, userPrompt, maxTokens) {
+  const model = 'gemini-2.0-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    generationConfig: { maxOutputTokens: maxTokens || 1200, temperature: 0.7 }
+  };
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
 // ═══════════════════════════════════════════════════════
 // DADOS DOS CASOS
 // ═══════════════════════════════════════════════════════
@@ -671,67 +872,44 @@ ARTIGOS: Art. 147-A (stalking), Art. 147 (ameaça), LMP Art. 40 (+1/3), Art. 26 
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
 let state = {
-  roomCode: '',
-  myRole: '',
-  myName: '',
-  partnerName: '',
-  partnerRole: '',
-  caseIdx: 0,
-  solo: false,
-  createRole: '',
-  joinRole: '',
-  scoreAcu: 0,
-  scoreDef: 0,
-  messages: [],
-  verdictRevealed: false,
+  roomCode:'', myRole:'', myName:'', partnerName:'', partnerRole:'',
+  caseIdx:0, solo:false, createRole:'', joinRole:'',
+  scoreAcu:0, scoreDef:0, messages:[], verdictRevealed:false,
 };
-
-let db = null;
-let roomRef = null;
-let messagesRef = null;
+let db = null, roomRef = null, messagesRef = null;
 
 // ═══════════════════════════════════════════════════════
 // FIREBASE INIT
 // ═══════════════════════════════════════════════════════
 function initFirebase() {
   try {
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     db = firebase.database();
     return true;
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    return false;
-  }
+  } catch(e) { console.error('Firebase:', e); return false; }
 }
 
 // ═══════════════════════════════════════════════════════
 // LOBBY
 // ═══════════════════════════════════════════════════════
 function initLobby() {
-  if (!initFirebase()) {
-    alert('Erro ao conectar ao Firebase. Verifique a configuração!');
-    return;
-  }
+  if (!initFirebase()) { alert('Erro ao conectar ao Firebase!'); return; }
   const scroll = document.getElementById('case-scroll');
   scroll.innerHTML = CASES.map((c,i)=>`
     <div class="case-chip ${i===0?'active':''}" onclick="selectCase(${i})">${c.id} · ${c.nome}</div>`).join('');
+  initApiKeyUI();
 }
 
 function selectCase(i) {
   state.caseIdx = i;
   document.querySelectorAll('.case-chip').forEach((el,j)=>el.classList.toggle('active',j===i));
 }
-
 function selectRole(r) {
   state.createRole = r;
   document.getElementById('rc-acu').classList.toggle('sel', r==='acusacao');
   document.getElementById('rc-def').classList.toggle('sel', r==='defesa');
 }
-
 function selectJoinRole(r) {
   state.joinRole = r;
   document.getElementById('rj-acu').classList.toggle('sel', r==='acusacao');
@@ -739,59 +917,43 @@ function selectJoinRole(r) {
 }
 
 // ═══════════════════════════════════════════════════════
-// CRIAR SALA — Firebase
+// CRIAR SALA
 // ═══════════════════════════════════════════════════════
 async function createRoom() {
   const name = document.getElementById('inp-name-create').value.trim();
   if (!name) { alert('Digite seu nome!'); return; }
   if (!state.createRole) { alert('Escolha seu papel!'); return; }
-
   const btn = document.getElementById('btn-create');
-  btn.disabled = true;
-  btn.textContent = 'CRIANDO...';
-
-  state.myName = name;
-  state.myRole = state.createRole;
-  // Gera código de 4 letras
+  btn.disabled = true; btn.textContent = 'CRIANDO...';
+  state.myName = name; state.myRole = state.createRole;
   state.roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
-
   roomRef = db.ref(`rooms/${state.roomCode}`);
   messagesRef = db.ref(`rooms/${state.roomCode}/messages`);
-
   try {
-    // Verifica se código já existe (colisão rara)
     const snap = await roomRef.once('value');
     if (snap.exists()) {
       state.roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
       roomRef = db.ref(`rooms/${state.roomCode}`);
       messagesRef = db.ref(`rooms/${state.roomCode}/messages`);
     }
-
     await roomRef.set({
-      creator: name,
-      creatorRole: state.myRole,
-      caseIdx: state.caseIdx,
-      scoreAcu: 0,
-      scoreDef: 0,
-      ready: false,
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      creator:name, creatorRole:state.myRole, caseIdx:state.caseIdx,
+      scoreAcu:0, scoreDef:0, ready:false,
+      createdAt:firebase.database.ServerValue.TIMESTAMP,
     });
-
-    // Auto-deleta a sala após 3 horas
-    setTimeout(() => { if (roomRef) roomRef.remove(); }, 3 * 60 * 60 * 1000);
-
-    btn.disabled = false;
-    btn.textContent = 'CRIAR SALA';
+    setTimeout(()=>{ if(roomRef) roomRef.remove(); }, 3*60*60*1000);
+    btn.disabled = false; btn.textContent = 'CRIAR SALA';
+    document.getElementById('room-code-display').textContent = state.roomCode;
+    document.getElementById('code-display').style.display = 'block';
     showWaiting();
   } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'CRIAR SALA';
+    btn.disabled = false; btn.textContent = 'CRIAR SALA';
     alert('Erro ao criar sala: ' + e.message);
   }
 }
 
 // ═══════════════════════════════════════════════════════
-// ENTRAR EM SALA — Firebase
+// ENTRAR EM SALA
 // ═══════════════════════════════════════════════════════
 async function joinRoom() {
   const name = document.getElementById('inp-name-join').value.trim();
@@ -799,254 +961,114 @@ async function joinRoom() {
   if (!name) { alert('Digite seu nome!'); return; }
   if (!state.joinRole) { alert('Escolha seu papel!'); return; }
   if (code.length !== 4) { alert('Código inválido! Deve ter 4 letras.'); return; }
-
   const btn = document.getElementById('btn-join');
-  btn.disabled = true;
-  btn.textContent = 'ENTRANDO...';
-
-  state.myName = name;
-  state.myRole = state.joinRole;
-  state.roomCode = code;
-
+  btn.disabled = true; btn.textContent = 'ENTRANDO...';
+  state.myName = name; state.myRole = state.joinRole; state.roomCode = code;
   roomRef = db.ref(`rooms/${code}`);
   messagesRef = db.ref(`rooms/${code}/messages`);
-
   try {
     const snap = await roomRef.once('value');
     const room = snap.val();
-
-    if (!room) {
-      btn.disabled = false;
-      btn.textContent = 'ENTRAR NA SALA';
-      alert('Sala não encontrada! Verifique o código: ' + code);
-      return;
-    }
-
-    if (room.creatorRole === state.myRole) {
-      btn.disabled = false;
-      btn.textContent = 'ENTRAR NA SALA';
-      alert(`O criador já está como ${room.creatorRole === 'acusacao' ? 'Acusação ⚔️' : 'Defesa 🛡️'}. Escolha o outro papel!`);
-      return;
-    }
-
-    if (room.partnerName) {
-      btn.disabled = false;
-      btn.textContent = 'ENTRAR NA SALA';
-      alert('Sala já está cheia!');
-      return;
-    }
-
+    if (!room) { btn.disabled=false; btn.textContent='ENTRAR NA SALA'; alert('Sala não encontrada! Código: '+code); return; }
+    if (room.creatorRole === state.myRole) { btn.disabled=false; btn.textContent='ENTRAR NA SALA'; alert(`O criador já é ${room.creatorRole==='acusacao'?'Acusação ⚔️':'Defesa 🛡️'}. Escolha o outro papel!`); return; }
+    if (room.partnerName) { btn.disabled=false; btn.textContent='ENTRAR NA SALA'; alert('Sala já está cheia!'); return; }
     state.caseIdx = room.caseIdx || 0;
     state.partnerName = room.creator;
     state.partnerRole = room.creatorRole;
-
-    await roomRef.update({
-      partnerName: name,
-      partnerRole: state.myRole,
-      ready: true,
-    });
-
-    btn.disabled = false;
-    btn.textContent = 'ENTRAR NA SALA';
+    await roomRef.update({ partnerName:name, partnerRole:state.myRole, ready:true });
+    btn.disabled=false; btn.textContent='ENTRAR NA SALA';
     setupRealtimeListeners();
     launchGame();
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'ENTRAR NA SALA';
-    alert('Erro ao entrar na sala: ' + e.message);
-  }
+  } catch(e) { btn.disabled=false; btn.textContent='ENTRAR NA SALA'; alert('Erro: '+e.message); }
 }
 
 // ═══════════════════════════════════════════════════════
-// AGUARDANDO PARCEIRO
+// WAITING
 // ═══════════════════════════════════════════════════════
 function showWaiting() {
   document.getElementById('card-create').style.display = 'none';
   document.querySelectorAll('.divider').forEach(el=>el.style.display='none');
   document.getElementById('card-join').style.display = 'none';
-  document.getElementById('card-waiting').style.display = 'flex';
-  document.getElementById('card-waiting').style.flexDirection = 'column';
-  document.getElementById('card-waiting').style.alignItems = 'center';
+  const cw = document.getElementById('card-waiting');
+  cw.style.display = 'flex'; cw.style.flexDirection = 'column'; cw.style.alignItems = 'center';
   document.getElementById('waiting-code').textContent = state.roomCode;
   updateWaitingUI();
-
-  // Escuta quando parceiro entrar
-  roomRef.on('value', (snap) => {
+  roomRef.on('value', snap => {
     const room = snap.val();
     if (!room) return;
     if (room.ready && room.partnerName) {
       state.partnerName = room.partnerName;
       state.partnerRole = room.partnerRole;
       updateWaitingUI();
-      roomRef.off(); // Para de escutar
+      roomRef.off();
       setupRealtimeListeners();
-      setTimeout(() => launchGame(), 400);
+      setTimeout(()=>launchGame(), 400);
     }
   });
 }
 
 function updateWaitingUI() {
   const list = document.getElementById('players-list');
-  const myRoleLbl = state.myRole === 'acusacao' ? '⚔️ ACUSAÇÃO' : '🛡️ DEFESA';
-  const partnerRoleLbl = state.partnerName
-    ? (state.partnerRole === 'acusacao' ? '⚔️ ACUSAÇÃO' : '🛡️ DEFESA')
-    : '...';
+  const myLbl = state.myRole==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  const partLbl = state.partnerName ? (state.partnerRole==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA') : '...';
   list.innerHTML = `
-    <div class="player-item">
-      <div class="pi-dot ${state.myRole}"></div>
-      <div class="pi-name">${state.myName} (você)</div>
-      <div class="pi-role">${myRoleLbl}</div>
-    </div>
-    <div class="player-item">
-      <div class="pi-dot ${state.partnerName ? state.partnerRole : 'empty'}"></div>
-      <div class="pi-name">${state.partnerName || 'Aguardando...'}</div>
-      <div class="pi-role">${partnerRoleLbl}</div>
-    </div>`;
+    <div class="player-item"><div class="pi-dot ${state.myRole}"></div><div class="pi-name">${state.myName} (você)</div><div class="pi-role">${myLbl}</div></div>
+    <div class="player-item"><div class="pi-dot ${state.partnerName?state.partnerRole:'empty'}"></div><div class="pi-name">${state.partnerName||'Aguardando...'}</div><div class="pi-role">${partLbl}</div></div>`;
 }
 
 function startAnySolo() {
   state.solo = true;
   state.partnerName = 'Parceiro';
-  state.partnerRole = state.myRole === 'acusacao' ? 'defesa' : 'acusacao';
+  state.partnerRole = state.myRole==='acusacao'?'defesa':'acusacao';
   if (roomRef) roomRef.off();
   launchGame();
 }
 
 // ═══════════════════════════════════════════════════════
-// LISTENERS TEMPO REAL — Firebase
+// REALTIME LISTENERS
 // ═══════════════════════════════════════════════════════
 function setupRealtimeListeners() {
   if (!messagesRef) return;
-
-  // Escuta novas mensagens
   let firstLoad = true;
-  messagesRef.on('child_added', (snap) => {
+  messagesRef.on('child_added', snap => {
     const msg = snap.val();
-    if (!msg) return;
-    // Ignora mensagens antigas ao entrar
-    if (firstLoad) return;
+    if (!msg || firstLoad) return;
     if (msg.sender !== state.myName) {
       state.messages.push(msg);
       renderMessage(msg, false);
-      if (!document.getElementById('tab-chat').classList.contains('active')) {
+      const chatTab = document.querySelector('[data-tab="chat"]');
+      if (!chatTab.classList.contains('active')) {
         document.getElementById('chat-notif').classList.add('show');
       }
     }
   });
-  // Após 1s, começa a processar novas mensagens
-  setTimeout(() => { firstLoad = false; }, 1000);
-
-  // Escuta placar
-  db.ref(`rooms/${state.roomCode}/scoreAcu`).on('value', (snap) => {
-    const v = snap.val();
-    if (v !== null && v !== state.scoreAcu) {
-      state.scoreAcu = v;
-      document.getElementById('sc-acu').textContent = v;
-    }
+  setTimeout(()=>{ firstLoad = false; }, 1000);
+  db.ref(`rooms/${state.roomCode}/scoreAcu`).on('value', snap => {
+    const v = snap.val(); if (v !== null && v !== state.scoreAcu) { state.scoreAcu=v; document.getElementById('sc-acu').textContent=v; }
   });
-  db.ref(`rooms/${state.roomCode}/scoreDef`).on('value', (snap) => {
-    const v = snap.val();
-    if (v !== null && v !== state.scoreDef) {
-      state.scoreDef = v;
-      document.getElementById('sc-def').textContent = v;
-    }
+  db.ref(`rooms/${state.roomCode}/scoreDef`).on('value', snap => {
+    const v = snap.val(); if (v !== null && v !== state.scoreDef) { state.scoreDef=v; document.getElementById('sc-def').textContent=v; }
   });
 }
 
 // ═══════════════════════════════════════════════════════
-// ENVIAR MENSAGEM — Firebase
+// LAUNCH GAME
 // ═══════════════════════════════════════════════════════
-async function sendMessage() {
-  const inp = document.getElementById('chat-inp');
-  const text = inp.value.trim();
-  if (!text) return;
-
-  const msg = {
-    type: 'msg',
-    sender: state.myName,
-    role: state.myRole,
-    text: text,
-    time: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
-    arts: extractArts(text),
-  };
-
-  inp.value = '';
-  inp.style.height = 'auto';
-  state.messages.push(msg);
-  renderMessage(msg, true);
-
-  // Salva no Firebase (parceiro recebe em tempo real)
-  if (!state.solo && messagesRef) {
-    try { await messagesRef.push(msg); } catch(e) {}
-  }
-
-  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito') || text.toLowerCase().includes('sentença'))) {
-    setTimeout(() => requestAIVerdict(), 1000);
-  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
-    setTimeout(() => judgeIntervene(), 800);
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// PLACAR — Firebase
-// ═══════════════════════════════════════════════════════
-async function addScore(side) {
-  if (side==='acu') state.scoreAcu++;
-  else state.scoreDef++;
-  document.getElementById('sc-acu').textContent = state.scoreAcu;
-  document.getElementById('sc-def').textContent = state.scoreDef;
-  if (!state.solo && roomRef) {
-    try {
-      await roomRef.update({ scoreAcu: state.scoreAcu, scoreDef: state.scoreDef });
-    } catch(e) {}
-  }
-}
-
-function resetScore() {
-  state.scoreAcu = 0; state.scoreDef = 0;
-  document.getElementById('sc-acu').textContent = '0';
-  document.getElementById('sc-def').textContent = '0';
-  if (!state.solo && roomRef) {
-    try { roomRef.update({ scoreAcu: 0, scoreDef: 0 }); } catch(e) {}
-  }
-}
-
-function backToLobby() {
-  if (confirm('Sair do debate?')) {
-    // Limpa listeners Firebase
-    if (messagesRef) messagesRef.off();
-    if (db && state.roomCode) {
-      db.ref(`rooms/${state.roomCode}/scoreAcu`).off();
-      db.ref(`rooms/${state.roomCode}/scoreDef`).off();
-    }
-    roomRef = null;
-    messagesRef = null;
-
-    document.getElementById('s-game').classList.remove('active');
-    document.getElementById('s-lobby').classList.add('active');
-    // Reset
-    state.messages = [];
-    state.verdictRevealed = false;
-    document.getElementById('chat-messages').innerHTML = '<div class="sys-msg">⚖️ Debate iniciado — que comecem os argumentos</div>';
-  }
-}
-
 function launchGame() {
+  // Reset instâncias para nova partida
+  instState.verdicts = { '1a': null, 'tj': null, 'stj': null };
+  instState.recursos = { tj: null, stj: null };
+  instState.currentInst = '1a';
+  instState.recursoOpen = null;
   const c = CASES[state.caseIdx];
-
-  // Topbar
-  document.getElementById('gtb-case').textContent = `Caso ${c.id}`;
-  document.getElementById('gtb-sep').style.display = 'block';
   document.getElementById('gtb-title').textContent = c.titulo;
   const badge = document.getElementById('gtb-badge');
   badge.className = `gtb-badge ${state.myRole}`;
-  document.getElementById('gtb-role-txt').textContent = state.myRole === 'acusacao' ? '⚔️ ACUSAÇÃO' : '🛡️ DEFESA';
-
-  // TAB CASO
+  document.getElementById('gtb-role-txt').textContent = state.myRole==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
   document.getElementById('g-tags').innerHTML = c.tags.map(t=>`<span class="tag ${t.c}">${t.t}</span>`).join('');
   document.getElementById('g-title').textContent = c.titulo;
   document.getElementById('g-body').innerHTML = c.corpo;
-  const pergs = state.myRole === 'acusacao' ? c.perguntas_acu : c.perguntas_def;
+  const pergs = state.myRole==='acusacao'?c.perguntas_acu:c.perguntas_def;
   document.getElementById('g-guide-lbl').textContent = `// perguntas para a ${state.myRole}`;
   document.getElementById('g-guide').innerHTML = pergs.map((p,i)=>`
     <div class="card-sm" style="padding:11px 12px 11px 32px;position:relative;margin-bottom:6px;">
@@ -1058,92 +1080,89 @@ function launchGame() {
       <span style="position:absolute;left:10px;top:10px;font-family:var(--serif);font-size:14px;font-weight:700;color:var(--gold2);">?</span>
       <span style="font-size:12.5px;color:var(--text2);font-weight:300;">${h}</span>
     </div>`).join('');
-
-  // TAB VADE
   buildVade(c);
-
-  // TAB CALC
   buildCalc(c);
-
-  // TAB VEREDITO
   buildVerdictLocked();
-
-  // Art quick pills no chat
   document.getElementById('art-quick-row').innerHTML = c.arts_rapidos.map(a=>`
     <button class="art-quick-pill" onclick="insertArtPill('${a}')">${a}</button>`).join('');
-
-  // Mensagem de boas-vindas do juiz
-  setTimeout(() => {
-    addJudgeMessage(`⚖️ **Sessão iniciada.** Caso: *${c.titulo}*\n\n${state.myName} (${state.myRole === 'acusacao' ? 'Acusação' : 'Defesa'}) está presente${state.solo ? '' : ` · ${state.partnerName} (${state.partnerRole === 'acusacao' ? 'Acusação' : 'Defesa'}) está presente`}.\n\nPode iniciar os argumentos. Ao final, chame **"Juiz, veredito!"** ou vá para a aba Veredito.`);
+  setTimeout(()=>{
+    addJudgeMessage(`⚖️ **Sessão iniciada.** Caso: *${c.titulo}*\n\n${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'}) está presente${state.solo?'':`· ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'}) está presente`}.\n\nPode iniciar os argumentos. Ao final, vá para aba **Veredito** e solicite o Juiz IA.`);
   }, 600);
-
-  // Mostra game
   document.getElementById('s-lobby').classList.remove('active');
   document.getElementById('s-game').classList.add('active');
+  showTab('caso');
   window.scrollTo(0,0);
 }
 
+// ═══════════════════════════════════════════════════════
+// TABS — bottom bar
+// ═══════════════════════════════════════════════════════
 function showTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.btab').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id===`tab-${name}`));
-  if (name === 'chat') {
+  if (name==='chat') {
     document.getElementById('chat-notif').classList.remove('show');
-    setTimeout(() => {
-      const cm = document.getElementById('chat-messages');
-      cm.scrollTop = cm.scrollHeight;
-    }, 100);
+    setTimeout(()=>{ const cm=document.getElementById('chat-messages'); cm.scrollTop=cm.scrollHeight; }, 80);
   }
 }
 
 // ═══════════════════════════════════════════════════════
 // CHAT
 // ═══════════════════════════════════════════════════════
-let typingTimer = null;
-
 function onChatInput() {
   const ta = document.getElementById('chat-inp');
   ta.style.height = 'auto';
-  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  ta.style.height = Math.min(ta.scrollHeight, 100) + 'px';
 }
-
 function onChatKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function insertArtPill(art) {
   const inp = document.getElementById('chat-inp');
   inp.value += `[${art}] `;
   inp.focus();
 }
-
 function extractArts(text) {
-  const matches = text.match(/\[([^\]]+)\]/g) || [];
-  return matches.map(m => m.slice(1,-1));
+  return (text.match(/\[([^\]]+)\]/g)||[]).map(m=>m.slice(1,-1));
+}
+
+async function sendMessage() {
+  const inp = document.getElementById('chat-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  const msg = {
+    type:'msg', sender:state.myName, role:state.myRole, text,
+    time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    arts:extractArts(text),
+  };
+  inp.value = ''; inp.style.height = 'auto';
+  state.messages.push(msg);
+  renderMessage(msg, true);
+  if (!state.solo && messagesRef) {
+    try { await messagesRef.push(msg); } catch(e) {}
+  }
+  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito')||text.toLowerCase().includes('sentença'))) {
+    setTimeout(()=>requestAIVerdict('1a'), 1000);
+  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
+    setTimeout(()=>judgeIntervene(), 800);
+  }
 }
 
 function renderMessage(msg, isMine) {
   const cm = document.getElementById('chat-messages');
   const div = document.createElement('div');
-  const roleLabel = msg.role === 'acusacao' ? '⚔️ ACUSAÇÃO' : '🛡️ DEFESA';
-
-  div.className = `msg ${isMine ? 'mine' : 'theirs'} ${msg.role}`;
+  const roleLabel = msg.role==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  div.className = `msg ${isMine?'mine':'theirs'} ${msg.role}`;
   div.innerHTML = `
     <div class="msg-header">
       <span class="msg-role ${msg.role}">${roleLabel} · ${msg.sender}</span>
       <span class="msg-time">${msg.time}</span>
     </div>
-    <div class="msg-bubble">
-      ${msg.text.replace(/\[([^\]]+)\]/g, '<span class="msg-art-tag">📖 $1</span>')}
-    </div>`;
-
+    <div class="msg-bubble">${msg.text.replace(/\[([^\]]+)\]/g,'<span class="msg-art-tag">📖 $1</span>')}</div>`;
   cm.appendChild(div);
   cm.scrollTop = cm.scrollHeight;
-
-  // Notif se não estiver no chat
-  if (!document.getElementById('tab-chat').classList.contains('active') && !isMine) {
+  const chatTab = document.querySelector('[data-tab="chat"]');
+  if (!chatTab.classList.contains('active') && !isMine) {
     document.getElementById('chat-notif').classList.add('show');
   }
 }
@@ -1171,6 +1190,9 @@ function addSysMessage(text) {
   cm.scrollTop = cm.scrollHeight;
 }
 
+// ═══════════════════════════════════════════════════════
+// JUDGE INTERVENE — com fallback se sem API key
+// ═══════════════════════════════════════════════════════
 async function judgeIntervene() {
   const c = CASES[state.caseIdx];
   const recent = state.messages.slice(-6).map(m=>`${m.sender} (${m.role}): ${m.text}`).join('\n');
@@ -1178,29 +1200,31 @@ async function judgeIntervene() {
   document.getElementById('typing-who').textContent = 'Juiz IA';
   typing.classList.add('show');
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:`Você é um Juiz de Direito presidindo um debate jurídico simulado. Seja objetivo, didático e imparcial. Use linguagem acessível mas juridicamente precisa. Máximo 3 linhas. Não repita argumentos já ditos. Faça uma pergunta desafiadora ou pontue um aspecto jurídico relevante não explorado.`,
-        messages:[{role:'user',content:`${c.context_juiz}\n\nDebate recente:\n${recent}\n\nFaça uma breve intervenção como juiz — questione, aponte lacunas ou desafie os advogados.`}]
-      })
-    });
-    const data = await resp.json();
-    const text = data.content?.[0]?.text || 'O Tribunal aguarda mais argumentos.';
+  const fallbacks = [
+    'O Tribunal nota que o argumento da inevitabilidade ainda não foi suficientemente explorado.',
+    'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado.',
+    'O Ministério Público precisa responder à tese subsidiária da defesa.',
+    'A dosimetria da pena depende da qualificadora ser mantida ou afastada.',
+    'Qual a prova concreta apresentada além do depoimento da parte?',
+  ];
+
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    await new Promise(r=>setTimeout(r, 1200));
     typing.classList.remove('show');
-    addJudgeMessage(text);
+    addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
+    return;
+  }
+
+  try {
+    const text = await callGemini(
+      `Você é um Juiz de Direito presidindo um debate jurídico simulado. Seja objetivo, didático e imparcial. Máximo 2-3 linhas. Faça uma pergunta desafiadora ou aponte um ponto jurídico não explorado.`,
+      `${c.context_juiz}\n\nDebate recente:\n${recent}\n\nIntervenção breve como juiz.`,
+      300
+    );
+    typing.classList.remove('show');
+    addJudgeMessage(text || fallbacks[0]);
   } catch(e) {
     typing.classList.remove('show');
-    const fallbacks = [
-      'O Tribunal nota que o argumento da inevitabilidade ainda não foi suficientemente explorado.',
-      'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado.',
-      'O Ministério Público precisa responder à tese subsidiária da defesa.',
-      'A dosimetria da pena depende da qualificadora ser mantida ou afastada.',
-    ];
     addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
   }
 }
@@ -1222,11 +1246,7 @@ function buildVade(c) {
       </div>
     </div>`).join('');
 }
-
-function toggleArt(i) {
-  document.getElementById(`art-${i}`).classList.toggle('expanded');
-}
-
+function toggleArt(i) { document.getElementById(`art-${i}`).classList.toggle('expanded'); }
 function useArtInChat(e, art) {
   e.stopPropagation();
   document.getElementById('chat-inp').value += `[${art}] `;
@@ -1241,180 +1261,266 @@ function buildCalc(c) {
   document.getElementById('chk-agg').innerHTML = c.agravantes.map((a,i)=>`
     <div class="chk-item" id="ca-${i}" onclick="toggleChk('a',${i})">
       <div class="chk-box" id="cb-a-${i}"></div>
-      <div>
-        <div class="chk-lbl">${a.t}</div>
-        <div class="chk-ef">${a.ef}</div>
-      </div>
+      <div><div class="chk-lbl">${a.t}</div><div class="chk-ef">${a.ef}</div></div>
     </div>`).join('');
   document.getElementById('chk-maj').innerHTML = c.majorantes.map((m,i)=>`
     <div class="chk-item" id="cm-${i}" onclick="toggleChk('m',${i})">
       <div class="chk-box" id="cb-m-${i}"></div>
-      <div>
-        <div class="chk-lbl">${m.t}</div>
-        <div class="chk-ef">${m.ef}</div>
-      </div>
+      <div><div class="chk-lbl">${m.t}</div><div class="chk-ef">${m.ef}</div></div>
     </div>`).join('');
   calcPena();
 }
 
 function toggleChk(type, i) {
   const c = CASES[state.caseIdx];
-  const items = type === 'a' ? c.agravantes : c.majorantes;
+  const items = type==='a'?c.agravantes:c.majorantes;
   const item = items[i];
   const el = document.getElementById(`c${type}-${i}`);
   const box = document.getElementById(`cb-${type}-${i}`);
-  const isOn = el.classList.contains('on-agg') || el.classList.contains('on-ate');
-  el.classList.remove('on-agg','on-ate');
-  box.textContent = '';
-  if (!isOn) {
-    el.classList.add(item.tipo === 'agg' ? 'on-agg' : 'on-ate');
-    box.textContent = item.tipo === 'agg' ? '+' : '−';
-  }
+  const isOn = el.classList.contains('on-agg')||el.classList.contains('on-ate');
+  el.classList.remove('on-agg','on-ate'); box.textContent='';
+  if (!isOn) { el.classList.add(item.tipo==='agg'?'on-agg':'on-ate'); box.textContent=item.tipo==='agg'?'+':'−'; }
   calcPena();
 }
 
 function calcPena() {
   const c = CASES[state.caseIdx];
-  const pct = document.getElementById('sl-pb').value / 100;
-  let base = c.penaMin + pct * (c.penaMax - c.penaMin);
-  document.getElementById('sl-val').textContent = base.toFixed(1) + ' anos';
-  document.getElementById('ph1').textContent = base.toFixed(1) + 'a';
-
+  const pct = document.getElementById('sl-pb').value/100;
+  let base = c.penaMin + pct*(c.penaMax-c.penaMin);
+  document.getElementById('sl-val').textContent = base.toFixed(1)+' anos';
+  document.getElementById('ph1').textContent = base.toFixed(1)+'a';
   let f2 = base;
-  c.agravantes.forEach((a,i)=>{
-    const el = document.getElementById(`ca-${i}`);
-    if (!el) return;
-    if (el.classList.contains('on-agg')) f2 *= 1.167;
-    if (el.classList.contains('on-ate')) f2 *= 0.833;
+  c.agravantes.forEach((_,i)=>{
+    const el=document.getElementById(`ca-${i}`); if(!el) return;
+    if(el.classList.contains('on-agg')) f2*=1.167;
+    if(el.classList.contains('on-ate')) f2*=0.833;
   });
-  document.getElementById('ph2').textContent = f2.toFixed(1) + 'a';
-
+  document.getElementById('ph2').textContent = f2.toFixed(1)+'a';
   let f3 = f2;
-  c.majorantes.forEach((m,i)=>{
-    const el = document.getElementById(`cm-${i}`);
-    if (!el) return;
-    if (el.classList.contains('on-agg')) f3 *= 1.333;
-    if (el.classList.contains('on-ate')) f3 *= 0.833;
+  c.majorantes.forEach((_,i)=>{
+    const el=document.getElementById(`cm-${i}`); if(!el) return;
+    if(el.classList.contains('on-agg')) f3*=1.333;
+    if(el.classList.contains('on-ate')) f3*=0.833;
   });
-  document.getElementById('ph3').textContent = f3.toFixed(1) + 'a';
-
-  const anos = Math.max(0, f3);
+  document.getElementById('ph3').textContent = f3.toFixed(1)+'a';
+  const anos = Math.max(0,f3);
   document.getElementById('calc-big').innerHTML = `${anos.toFixed(1)}<span> anos</span>`;
-
-  let regime, regimeDesc;
-  if (anos <= 4) {
-    regime = 'Regime Aberto / Pena Alternativa (Art. 44 CP)';
-    regimeDesc = `${anos.toFixed(1)} anos → regime aberto. Réu primário, crime sem violência, pena ≤ 4 anos: Art. 44 é praticamente automático.`;
-  } else if (anos <= 8) {
-    regime = 'Regime Semiaberto (Art. 33 §2º,b CP)';
-    regimeDesc = `${anos.toFixed(1)} anos → semiaberto para não reincidente. Permite trabalho externo e saídas temporárias.`;
-  } else {
-    regime = 'Regime Fechado (Art. 33 §2º,a CP)';
-    regimeDesc = `${anos.toFixed(1)} anos → fechado obrigatório. Pena > 8 anos ou reincidente em crime doloso.`;
-  }
+  let regime;
+  if (anos<=4) { regime='Regime Aberto / Pena Alternativa (Art. 44 CP)'; document.getElementById('regime-txt').textContent=`${anos.toFixed(1)} anos → regime aberto. Réu primário, crime sem violência, pena ≤ 4 anos: Art. 44 é praticamente automático.`; }
+  else if (anos<=8) { regime='Regime Semiaberto (Art. 33 §2º,b CP)'; document.getElementById('regime-txt').textContent=`${anos.toFixed(1)} anos → semiaberto para não reincidente. Permite trabalho externo e saídas temporárias.`; }
+  else { regime='Regime Fechado (Art. 33 §2º,a CP)'; document.getElementById('regime-txt').textContent=`${anos.toFixed(1)} anos → fechado obrigatório. Pena > 8 anos ou reincidente em crime doloso.`; }
   document.getElementById('calc-regime').textContent = regime;
-  document.getElementById('regime-txt').textContent = regimeDesc;
 }
 
 // ═══════════════════════════════════════════════════════
 // PLACAR
 // ═══════════════════════════════════════════════════════
+async function addScore(side) {
+  if(side==='acu') state.scoreAcu++; else state.scoreDef++;
+  document.getElementById('sc-acu').textContent = state.scoreAcu;
+  document.getElementById('sc-def').textContent = state.scoreDef;
+  if(!state.solo && roomRef) { try { await roomRef.update({scoreAcu:state.scoreAcu,scoreDef:state.scoreDef}); } catch(e){} }
+}
+function resetScore() {
+  state.scoreAcu=0; state.scoreDef=0;
+  document.getElementById('sc-acu').textContent='0';
+  document.getElementById('sc-def').textContent='0';
+  if(!state.solo && roomRef) { try { roomRef.update({scoreAcu:0,scoreDef:0}); } catch(e){} }
+}
+
+function backToLobby() {
+  if (confirm('Sair do debate?')) {
+    if(messagesRef) messagesRef.off();
+    if(db && state.roomCode) { db.ref(`rooms/${state.roomCode}/scoreAcu`).off(); db.ref(`rooms/${state.roomCode}/scoreDef`).off(); }
+    roomRef=null; messagesRef=null;
+    document.getElementById('s-game').classList.remove('active');
+    document.getElementById('s-lobby').classList.add('active');
+    state.messages=[]; state.verdictRevealed=false;
+    document.getElementById('chat-messages').innerHTML='<div class="sys-msg">⚖️ Debate iniciado — que comecem os argumentos</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// VEREDITO — SISTEMA 3 INSTÂNCIAS ADAPTATIVO
+// ═══════════════════════════════════════════════════════
+
+// Estado das instâncias
+const instState = {
+  verdicts: { '1a': null, 'tj': null, 'stj': null },
+  recursos: { tj: null, stj: null }, // { acu: texto, def: texto }
+  currentInst: '1a',
+  recursoOpen: null // 'acu' | 'def' | null
+};
+
 function buildVerdictLocked() {
+  const hasKey = geminiKey && geminiKey.startsWith('AIza');
   document.getElementById('verdict-wrap').innerHTML = `
     <div class="verdict-locked">
       <span class="vl-icon">🔒</span>
       <div class="vl-title">Veredito Selado</div>
-      <div class="vl-sub">Quando os argumentos estiverem completos, o Juiz IA lerá todo o debate e dará o veredito fundamentado com dosimetria real.</div>
-      <button class="btn-reveal" onclick="requestAIVerdict()">⚖️ Solicitar Veredito ao Juiz IA</button>
+      <div class="vl-sub">O Juiz IA analisará <strong>apenas o que foi dito no debate</strong>. Se um lado esqueceu de mencionar algo, o juiz não considera.</div>
+
+      <div class="player-pena-section">
+        <div class="pp-title">// TEMPO DE PENA — o que cada lado acredita ser o justo?</div>
+        <div class="pp-row">
+          <div class="pp-side acu">
+            <div class="pp-label acu">⚔️ ACUSAÇÃO pede</div>
+            <input class="pp-inp acu" id="pena-acu" type="text" placeholder="Ex: 4 anos, fechado" maxlength="40">
+          </div>
+          <div class="pp-side def">
+            <div class="pp-label def">🛡️ DEFESA pede</div>
+            <input class="pp-inp def" id="pena-def" type="text" placeholder="Ex: Absolvição" maxlength="40">
+          </div>
+        </div>
+      </div>
+
+      ${!hasKey ? `<div class="nokey-warn">⚠️ Sem chave Gemini — veredito com base fixa.<br>Cole sua chave gratuita do Google AI Studio no lobby. <a href="https://aistudio.google.com/app/apikey" target="_blank">Obter chave grátis →</a></div>` : ''}
+      <button class="btn-reveal" id="btn-reveal-main" onclick="requestAIVerdict('1a')">⚖️ Solicitar 1ª Instância</button>
       <div class="ai-loading" id="ai-loading">
         <div class="wc-spinner" style="width:24px;height:24px;border-width:2px;margin:0;"></div>
-        O Juiz IA está analisando todo o debate...
+        <span id="ai-loading-txt">O Juiz IA está analisando todo o debate...</span>
       </div>
     </div>`;
 }
 
-async function requestAIVerdict() {
+async function requestAIVerdict(instancia) {
   const c = CASES[state.caseIdx];
-  document.querySelector('.btn-reveal').style.display = 'none';
-  document.getElementById('ai-loading').classList.add('show');
+  const wrap = document.getElementById('verdict-wrap');
 
-  // Mostra no chat também
-  addSysMessage('⚖️ Juiz IA solicitado — analisando todo o debate...');
-  showTab('veredito');
+  // mostrar loading
+  const btnReveal = document.getElementById('btn-reveal-main');
+  if (btnReveal) btnReveal.style.display = 'none';
+  const loadingEl = document.getElementById('ai-loading');
+  if (loadingEl) loadingEl.classList.add('show');
 
-  // Monta o histórico do debate
+  const instLabels = { '1a': '1ª Instância', 'tj': 'Tribunal de Justiça', 'stj': 'STJ' };
+  const loadTxt = document.getElementById('ai-loading-txt');
+  if (loadTxt) loadTxt.textContent = `Juiz analisando ${instLabels[instancia]}...`;
+
+  addSysMessage(`⚖️ ${instLabels[instancia]} — Juiz IA deliberando...`);
+  showTab('chat');
+  setTimeout(()=>showTab('veredito'), 1000);
+
   const debateLog = state.messages
-    .filter(m => m.type === 'msg')
-    .map(m => `${m.sender} (${m.role === 'acusacao' ? 'Acusação' : 'Defesa'}): ${m.text}`)
-    .join('\n') || 'Sem argumentos registrados no chat.';
+    .filter(m=>m.type==='msg')
+    .map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`)
+    .join('\n') || 'Nenhum argumento foi apresentado no debate.';
 
-  // Pega valores da calculadora
-  const penaFinal = document.getElementById('calc-big').textContent;
-  const scoreMsg = `Placar: Acusação ${state.scoreAcu} × Defesa ${state.scoreDef}`;
+  const penaAcu = document.getElementById('pena-acu')?.value?.trim() || '(não informado)';
+  const penaDef = document.getElementById('pena-def')?.value?.trim() || '(não informado)';
+  const calcPenaVal = document.getElementById('calc-big')?.textContent || '—';
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:`Você é um Juiz de Direito brasileiro dando sentença em um julgamento simulado. Analise os argumentos apresentados pelos advogados e profira sentença fundamentada. Seja preciso juridicamente. Responda APENAS em JSON válido sem markdown.`,
-        messages:[{role:'user',content:`${c.context_juiz}
+  // Monta contexto de recursos se for TJ ou STJ
+  let recursosCtx = '';
+  if (instancia === 'tj' && instState.recursos.tj) {
+    const r = instState.recursos.tj;
+    recursosCtx = `\n\nRECURSOS APRESENTADOS AO TJ:\nAcusação recorreu: ${r.acu||'não recorreu'}\nDefesa recorreu: ${r.def||'não recorreu'}`;
+  }
+  if (instancia === 'stj' && instState.recursos.stj) {
+    const r = instState.recursos.stj;
+    recursosCtx = `\n\nRECURSOS APRESENTADOS AO STJ:\nAcusação recorreu: ${r.acu||'não recorreu'}\nDefesa recorreu: ${r.def||'não recorreu'}`;
+  }
 
-DEBATE COMPLETO:
+  // Sentença anterior para TJ e STJ
+  let sentencaAnterior = '';
+  if (instancia === 'tj' && instState.verdicts['1a']) {
+    const v1 = instState.verdicts['1a'];
+    sentencaAnterior = `\n\nSENTENÇA DE 1ª INSTÂNCIA: ${v1.nome_resultado} — ${v1.pena}`;
+  }
+  if (instancia === 'stj' && instState.verdicts['tj']) {
+    const vtj = instState.verdicts['tj'];
+    sentencaAnterior = `\n\nACÓRDÃO DO TJ: ${vtj.nome_resultado} — ${vtj.pena}`;
+    if (instState.verdicts['1a']) {
+      sentencaAnterior += `\nSENTENÇA DE 1ª INSTÂNCIA: ${instState.verdicts['1a'].nome_resultado} — ${instState.verdicts['1a'].pena}`;
+    }
+  }
+
+  const instInstructions = {
+    '1a': `Você é o Juiz de Direito de 1ª Instância. Profira a sentença analisando EXCLUSIVAMENTE os argumentos apresentados no debate. Se um argumento não foi mencionado, NÃO o considere. Seja draconiano: julgue só o que foi dito.`,
+    'tj': `Você é Desembargador do Tribunal de Justiça julgando recurso. Analise os argumentos do debate original E os fundamentos do recurso. Você PODE confirmar, reformar parcialmente ou reformar totalmente a sentença de 1ª instância. Fundamente por que reforma ou mantém.`,
+    'stj': `Você é Ministro do STJ julgando recurso especial. Analise questões de direito, não fatos. Foque em violação de lei federal, divergência jurisprudencial ou contrariedade a súmula. Você PODE reformar o acórdão do TJ com base em questões jurídicas.`
+  };
+
+  const systemPrompt = instInstructions[instancia] + ` Responda APENAS em JSON válido, sem markdown, sem texto antes ou depois.`;
+
+  const userPrompt = `${c.context_juiz}
+
+DEBATE COMPLETO (julgue APENAS isso — se não foi mencionado, não existe):
 ${debateLog}
 
-${scoreMsg}
+PEDIDOS DAS PARTES:
+Acusação pede: ${penaAcu}
+Defesa pede: ${penaDef}
+Calculadora de pena (referência): ${calcPenaVal}
+Placar do debate: Acusação ${state.scoreAcu} × Defesa ${state.scoreDef}${sentencaAnterior}${recursosCtx}
 
-Profira sentença. Responda em JSON:
+Profira ${instLabels[instancia]}. Responda APENAS em JSON:
 {
   "resultado": "condenado" ou "absolvido" ou "parcialmente_condenado",
   "nome_resultado": "CONDENADO" ou "ABSOLVIDO" ou "CONDENADO PARCIALMENTE",
-  "icon": emoji representativo,
-  "pena": "X anos e Y meses" ou "Absolvição" ou "Extinção da punibilidade",
-  "ratio": "fundamentação principal em 2-3 frases, citando os argumentos dos advogados",
-  "fundamentacao": "fundamentação completa com dosimetria, mencionando o que cada lado apresentou",
+  "icon": "emoji representativo",
+  "pena": "X anos e Y meses de regime Y" ou "Absolvição" ou "Extinção da punibilidade",
+  "ratio": "fundamentação principal em 2-3 frases, citando APENAS o que as partes disseram no debate",
+  "fundamentacao": "fundamentação completa com dosimetria. Mencione explicitamente o que foi e o que NÃO foi apresentado pelas partes e como isso influenciou",
+  "reforma": "manteve" ou "reformou" ou "reformou parcialmente" (apenas para TJ e STJ),
   "artigos": ["Art. X CP", "Art. Y CP"]
-}`}]
-      })
-    });
+}`;
 
-    const data = await resp.json();
-    const raw = data.content?.[0]?.text || '{}';
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    await new Promise(r=>setTimeout(r, 2000));
+    const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
+    instState.verdicts[instancia] = fallback;
+    renderInstanceVerdict(instancia, fallback);
+    return;
+  }
+
+  try {
+    const raw = await callGemini(systemPrompt, userPrompt, 1400);
     const clean = raw.replace(/```json|```/g,'').trim();
     let v;
     try { v = JSON.parse(clean); } catch(e) { v = null; }
-
     if (v) {
-      renderVerdict(v);
+      instState.verdicts[instancia] = v;
+      renderInstanceVerdict(instancia, v);
     } else {
-      renderVerdictFallback(c);
+      const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
+      instState.verdicts[instancia] = fallback;
+      renderInstanceVerdict(instancia, fallback);
     }
   } catch(e) {
-    renderVerdictFallback(c);
+    console.error('Gemini Verdict error:', e);
+    const fallback = generateFallbackVerdict(c, state.scoreAcu, state.scoreDef, instancia);
+    instState.verdicts[instancia] = fallback;
+    renderInstanceVerdict(instancia, fallback);
   }
 }
 
-function renderVerdict(v) {
-  const scoreMsg = state.scoreAcu > state.scoreDef
-    ? `Acusação venceu o debate (${state.scoreAcu}×${state.scoreDef})`
-    : state.scoreDef > state.scoreAcu
-    ? `Defesa venceu o debate (${state.scoreDef}×${state.scoreAcu})`
-    : `Debate empatado (${state.scoreAcu}×${state.scoreDef})`;
+function renderInstanceVerdict(instancia, v) {
+  const resCls = v.resultado==='absolvido'?'absol':v.resultado==='parcialmente_condenado'?'parc':'cond';
+  const instLabels = { '1a':'1ª INSTÂNCIA','tj':'TRIBUNAL DE JUSTIÇA','stj':'STJ — ÚLTIMA INSTÂNCIA' };
+  const instClass = { '1a':'inst-1a','tj':'inst-tj','stj':'inst-stj' };
+  const instColors = { '1a':'var(--gold2)','tj':'var(--blue2)','stj':'var(--purple2)' };
 
-  const resCls = v.resultado === 'absolvido' ? 'absol' : v.resultado === 'parcialmente_condenado' ? 'parc' : 'cond';
+  // Monta HTML do veredito desta instância
+  const reformaTag = v.reforma && instancia!=='1a' ? `
+    <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;margin-bottom:12px;
+      background:${v.reforma==='manteve'?'rgba(58,184,122,.1)':v.reforma==='reformou'?'rgba(201,64,64,.1)':'rgba(201,149,58,.1)'};
+      border:1px solid ${v.reforma==='manteve'?'rgba(58,184,122,.25)':v.reforma==='reformou'?'rgba(201,64,64,.25)':'rgba(201,149,58,.25)'};
+      color:${v.reforma==='manteve'?'var(--green2)':v.reforma==='reformou'?'var(--red2)':'var(--gold2)'};">
+      ${v.reforma==='manteve'?'✓ MANTEVE A SENTENÇA':v.reforma==='reformou'?'⟳ REFORMOU A SENTENÇA':'◑ REFORMOU PARCIALMENTE'}
+    </div>` : '';
 
-  document.getElementById('verdict-wrap').innerHTML = `
-    <div class="verdict-card">
+  const verdictHTML = `
+    <div class="verdict-card ${instClass[instancia]}">
+      <div style="font-family:var(--mono);font-size:9px;color:${instColors[instancia]};letter-spacing:.1em;margin-bottom:10px;">⚖ ${instLabels[instancia]}</div>
+      ${reformaTag}
       <div class="verdict-stamp">
-        <div class="vs-icon">${v.icon || '⚖️'}</div>
+        <div class="vs-icon">${v.icon||'⚖️'}</div>
         <div>
-          <div class="vs-label">VEREDITO DO JUIZ IA</div>
+          <div class="vs-label">DECISÃO</div>
           <div class="vs-name ${resCls}">${v.nome_resultado}</div>
         </div>
       </div>
-      <div class="card-sm" style="margin-bottom:12px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3);">🏆 ${scoreMsg}</div>
       <div class="verdict-pena">
         <div class="vp-num">${v.pena}</div>
         <div class="vp-lbl">PENA DEFINITIVA</div>
@@ -1422,39 +1528,154 @@ function renderVerdict(v) {
       <div class="verdict-ratio">${v.ratio}</div>
       <div class="verdict-fund">${v.fundamentacao}</div>
       <div class="verdict-arts">${(v.artigos||[]).map(a=>`<span class="vart">${a}</span>`).join('')}</div>
-    </div>
-    <div class="card" style="text-align:center;">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px;">⚖️ VEREDITO BASEADO NOS ARGUMENTOS DO DEBATE</div>
-      <button class="btn-secondary" style="max-width:300px;margin:0 auto;" onclick="backToLobby()">← Novo Debate</button>
     </div>`;
 
-  // Adiciona no chat
-  addJudgeMessage(`⚖️ **SENTENÇA PROFERIDA**\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`);
-  showTab('veredito');
+  // Define próxima instância disponível
+  const proxima = instancia==='1a'?'tj':instancia==='tj'?'stj':null;
+
+  // Seção de recurso (se não for STJ)
+  let recursoHTML = '';
+  if (proxima) {
+    const proximaLabel = proxima==='tj'?'Tribunal de Justiça':'STJ';
+    const instRecKey = proxima; // 'tj' ou 'stj'
+    recursoHTML = `
+      <div class="recurso-section" id="recurso-section-${instancia}">
+        <div class="recurso-title">// RECURSO PARA O ${proximaLabel.toUpperCase()}</div>
+        <div class="recurso-btns">
+          <button class="btn-recurso acu" id="btn-rec-acu-${instancia}" onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ Acusação Recorre</button>
+          <button class="btn-recurso def" id="btn-rec-def-${instancia}" onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ Defesa Recorre</button>
+        </div>
+        <div id="recurso-input-${instancia}" style="display:none;"></div>
+        <div id="recurso-ready-${instancia}" style="display:none;">
+          <button class="btn-reveal" style="margin-top:12px;width:100%;" onclick="requestAIVerdict('${proxima}')">⚖️ Submeter ao ${proximaLabel}</button>
+        </div>
+      </div>`;
+  } else {
+    // STJ = fim
+    recursoHTML = `
+      <div class="card" style="text-align:center;margin-top:8px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px;">🏛️ PROCESSO ENCERRADO — DECISÃO DO STJ É IRRECORRÍVEL</div>
+        <button class="btn-secondary" style="max-width:300px;margin:0 auto;" onclick="backToLobby()">← Novo Debate</button>
+      </div>`;
+  }
+
+  // Monta nav das instâncias
+  const navHTML = buildInstNav(instancia);
+
+  // Renderiza tudo
+  document.getElementById('verdict-wrap').innerHTML = navHTML + `<div id="inst-panels">` + verdictHTML + recursoHTML + `</div>`;
+
+  // Mensagem no chat
+  const chatMsg = instancia==='1a'
+    ? `⚖️ **SENTENÇA DE 1ª INSTÂNCIA**\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`
+    : instancia==='tj'
+    ? `🏛️ **ACÓRDÃO DO TJ** (${v.reforma||'—'})\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`
+    : `🔴 **DECISÃO DO STJ** (${v.reforma||'—'}) — TRÂNSITO EM JULGADO\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`;
+  addJudgeMessage(chatMsg);
+
+  instState.currentInst = instancia;
 }
 
-function renderVerdictFallback(c) {
-  document.getElementById('verdict-wrap').innerHTML = `
-    <div class="verdict-card">
-      <div class="verdict-stamp">
-        <div class="vs-icon">⚖️</div>
-        <div>
-          <div class="vs-label">VEREDITO</div>
-          <div class="vs-name cond">DEBATE ENCERRADO</div>
-        </div>
-      </div>
-      <div class="verdict-ratio">Não foi possível conectar ao Juiz IA. Verifique a conexão e tente novamente.</div>
-      <button class="btn-reveal" onclick="requestAIVerdict()" style="margin-top:14px;">🔄 Tentar novamente</button>
+function buildInstNav(currentInst) {
+  const insts = [
+    { key:'1a', label:'1ª Instância', icon:'⚖️' },
+    { key:'tj', label:'TJ', icon:'🏛️' },
+    { key:'stj', label:'STJ', icon:'🔴' },
+  ];
+  const btns = insts.map(i => {
+    const v = instState.verdicts[i.key];
+    const isActive = i.key === currentInst;
+    const isDone = !!v;
+    const resCls = isDone ? (v.resultado==='absolvido'?'done-absol':v.resultado==='parcialmente_condenado'?'done-parc':'done-cond') : '';
+    const isLocked = !isDone && i.key !== currentInst;
+    return `<button class="inst-btn ${isActive?'active':''} ${resCls} ${isLocked?'locked':''}"
+      onclick="${isDone?`switchInstPanel('${i.key}')`:''}"
+      style="${isLocked?'pointer-events:none':''}"
+    ><span class="inst-dot"></span>${i.icon} ${i.label}${isDone&&!isActive?` — ${v.nome_resultado}`:''}${isActive?' ◀':''}</button>`;
+  }).join('');
+  return `<div class="inst-nav">${btns}</div>`;
+}
+
+function switchInstPanel(instancia) {
+  if (!instState.verdicts[instancia]) return;
+  instState.currentInst = instancia;
+  renderInstanceVerdict(instancia, instState.verdicts[instancia]);
+  // re-render recursosHTML corretamente já embutido acima
+}
+
+function openRecurso(fromInst, side, toInst) {
+  const container = document.getElementById(`recurso-input-${fromInst}`);
+  if (!container) return;
+  const label = side==='acu'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  const sideLabel = side==='acu'?'Acusação':'Defesa';
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="recurso-input-wrap">
+      <div class="ri-label ${side}">${label} — Fundamentos do recurso ao ${toInst==='tj'?'TJ':'STJ'}</div>
+      <textarea class="ri-ta" id="ri-ta-${fromInst}-${side}" placeholder="Digite os fundamentos jurídicos do recurso: qual erro da decisão, qual lei foi violada, qual tese deve ser reconhecida..."></textarea>
+      <button class="btn-enviar-recurso" onclick="submitRecurso('${fromInst}','${side}','${toInst}')">Confirmar Recurso da ${sideLabel}</button>
     </div>`;
+}
+
+function submitRecurso(fromInst, side, toInst) {
+  const ta = document.getElementById(`ri-ta-${fromInst}-${side}`);
+  const texto = ta ? ta.value.trim() : '';
+  if (!texto) { alert('Digite o fundamento do recurso!'); return; }
+
+  if (!instState.recursos[toInst]) instState.recursos[toInst] = {};
+  instState.recursos[toInst][side] = texto;
+
+  // Feedback visual
+  const container = document.getElementById(`recurso-input-${fromInst}`);
+  const label = side==='acu'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  container.innerHTML = `<div class="recurso-arg ${side}"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">${label} — recurso registrado ✓</div><div style="font-size:12px;color:var(--text2);">${texto}</div></div>`;
+
+  // Desabilita o botão do lado que recorreu
+  const btn = document.getElementById(`btn-rec-${side}-${fromInst}`);
+  if (btn) { btn.disabled = true; btn.textContent = side==='acu'?'⚔️ Acusação Recorreu ✓':'🛡️ Defesa Recorreu ✓'; }
+
+  // Mostra botão de submeter ao próximo tribunal
+  const readyEl = document.getElementById(`recurso-ready-${fromInst}`);
+  if (readyEl) readyEl.style.display = 'block';
+
+  addSysMessage(`📋 Recurso da ${side==='acu'?'Acusação':'Defesa'} registrado para o ${toInst==='tj'?'TJ':'STJ'}.`);
+}
+
+function generateFallbackVerdict(c, scoreAcu, scoreDef, instancia) {
+  const reforma = instancia==='1a' ? undefined :
+    (instancia==='tj' ? (scoreDef > scoreAcu ? 'reformou' : 'manteve') :
+    (scoreAcu > scoreDef ? 'reformou' : 'manteve'));
+  if (scoreAcu > scoreDef) {
+    return {
+      resultado:'condenado', nome_resultado:'CONDENADO', icon:'⚔️',
+      pena: c.penaMin ? `${(c.penaMin+(c.penaMax-c.penaMin)*0.4).toFixed(0)} anos` : '2 anos',
+      ratio:`A Acusação apresentou argumentos mais sólidos (${scoreAcu}×${scoreDef}). Os elementos do tipo penal foram demonstrados e as teses defensivas não foram suficientemente fundamentadas.`,
+      fundamentacao:`Com base nos argumentos apresentados no debate, a Acusação foi mais técnica e objetiva. A Defesa não conseguiu afastar a tipicidade da conduta com argumentos suficientes.`,
+      artigos: c.arts_rapidos.slice(0,3), reforma
+    };
+  } else if (scoreDef > scoreAcu) {
+    return {
+      resultado:'absolvido', nome_resultado:'ABSOLVIDO', icon:'🛡️',
+      pena:'Absolvição',
+      ratio:`A Defesa apresentou teses mais consistentes (${scoreDef}×${scoreAcu}). As excludentes e dúvidas razoáveis levantadas prevalecem pelo princípio in dubio pro reo.`,
+      fundamentacao:`A Defesa foi mais técnica no debate. O Tribunal não encontrou provas suficientes para superar a presunção de inocência com os argumentos apresentados.`,
+      artigos: c.arts_rapidos.slice(0,2), reforma
+    };
+  } else {
+    return {
+      resultado:'parcialmente_condenado', nome_resultado:'CONDENADO PARCIALMENTE', icon:'⚖️',
+      pena: `${c.penaMin?c.penaMin.toFixed(0):'1'} ano (mínimo)`,
+      ratio:`Debate equilibrado (${scoreAcu}×${scoreDef}). Condenação parcial com pena mínima reconhecendo parte das teses defensivas.`,
+      fundamentacao:`O debate empatado reflete complexidade do caso. O Tribunal reconhece elementos de ambos os lados e condena na pena mínima.`,
+      artigos: c.arts_rapidos.slice(0,2), reforma
+    };
+  }
 }
 
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 initLobby();
-
-// Garante que o gtb-sep começa hidden
-document.getElementById('gtb-sep').style.display = 'none';
 </script>
 </body>
 </html>
