@@ -410,8 +410,34 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .nokey-warn{background:rgba(201,64,64,.06);border:1px solid rgba(201,64,64,.2);border-radius:10px;padding:14px;margin-bottom:14px;font-family:var(--mono);font-size:10px;color:var(--red2);line-height:1.6;text-align:left;}
 .nokey-warn a{color:var(--gold2);text-decoration:none;}
 
+/* ══ NOTAS ══ */
+.notas-ta{width:100%;min-height:calc(100vh - 280px);background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px;color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.7;resize:none;outline:none;transition:border-color .18s;}
+.notas-ta:focus{border-color:var(--gold);}
+.notas-ta::placeholder{color:var(--text3);}
+
+/* Juiz interativo — destaque especial */
+.msg.judge-active .msg-bubble{background:linear-gradient(135deg,rgba(201,149,58,.12),rgba(201,149,58,.06));border:1px solid rgba(201,149,58,.4);border-left:3px solid var(--gold2);}
+
 .divhr{height:1px;background:var(--b1);margin:14px 0;}
-</style>
+
+/* Chat de recurso (instâncias superiores) */
+.recurso-chat-wrap{margin-top:16px;border-top:1px solid var(--b1);padding-top:14px;}
+.recurso-chat-title{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;margin-bottom:10px;}
+.recurso-chat-msgs{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:12px;min-height:80px;max-height:260px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;}
+.rc-msg{padding:9px 12px;border-radius:9px;font-size:12.5px;line-height:1.6;font-weight:300;}
+.rc-msg.acu{background:var(--red-d);border:1px solid rgba(201,64,64,.15);border-bottom-left-radius:4px;}
+.rc-msg.def{background:var(--blue-d);border:1px solid rgba(58,110,201,.15);border-bottom-right-radius:4px;align-self:flex-end;}
+.rc-msg.judge{background:var(--gold-d);border:1px solid rgba(201,149,58,.2);text-align:center;}
+.rc-msg-hdr{font-family:var(--mono);font-size:9px;margin-bottom:4px;}
+.rc-msg-hdr.acu{color:var(--red2);}
+.rc-msg-hdr.def{color:var(--blue2);}
+.rc-msg-hdr.judge{color:var(--gold2);}
+.recurso-chat-input{display:flex;gap:8px;}
+.recurso-chat-inp{flex:1;background:var(--s3);border:1px solid var(--b2);border-radius:9px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;min-height:44px;transition:border-color .15s;}
+.recurso-chat-inp:focus{border-color:var(--gold);}
+.recurso-chat-inp::placeholder{color:var(--text3);}
+.recurso-chat-send{padding:0 14px;border-radius:9px;border:none;background:var(--gold);color:#1a1000;font-family:var(--mono);font-size:10px;letter-spacing:.07em;cursor:pointer;min-height:44px;flex-shrink:0;font-weight:500;}
+.recurso-chat-send:hover{background:var(--gold2);}
 </head>
 <body>
 
@@ -607,6 +633,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       </div>
     </div>
 
+    <!-- TAB NOTAS -->
+    <div class="tab-panel" id="tab-notas">
+      <div class="game-body">
+        <div class="card" style="padding:16px;">
+          <div class="section-lbl" style="margin-bottom:10px;">// bloco de notas — privado (só você vê)</div>
+          <textarea id="notas-ta" class="notas-ta" placeholder="Suas anotações privadas: teses, artigos, argumentos que quer usar, pontos fracos do adversário..."></textarea>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:8px;">🔒 Salvo localmente — seu parceiro não vê</div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB VEREDITO -->
     <div class="tab-panel" id="tab-veredito">
       <div class="game-body">
@@ -637,6 +674,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="btab-indicator"></div>
       <div class="btab-icon">🧮</div>
       <span class="btab-label">PENA</span>
+    </button>
+    <button class="btab" onclick="showTab('notas')" data-tab="notas">
+      <div class="btab-indicator"></div>
+      <div class="btab-icon">📝</div>
+      <span class="btab-label">NOTAS</span>
     </button>
     <button class="btab" onclick="showTab('veredito')" data-tab="veredito">
       <div class="btab-indicator"></div>
@@ -1025,29 +1067,69 @@ function startAnySolo() {
 }
 
 // ═══════════════════════════════════════════════════════
-// REALTIME LISTENERS
+// REALTIME LISTENERS — sincronização total
 // ═══════════════════════════════════════════════════════
 function setupRealtimeListeners() {
   if (!messagesRef) return;
   let firstLoad = true;
+
+  // Mensagens do chat principal
   messagesRef.on('child_added', snap => {
     const msg = snap.val();
     if (!msg || firstLoad) return;
     if (msg.sender !== state.myName) {
       state.messages.push(msg);
-      renderMessage(msg, false);
-      const chatTab = document.querySelector('[data-tab="chat"]');
-      if (!chatTab.classList.contains('active')) {
-        document.getElementById('chat-notif').classList.add('show');
+      if (msg.type === 'judge') {
+        renderJudgeMessageInChat(msg.text);
+      } else if (msg.type === 'sys') {
+        addSysMessage(msg.text);
+      } else {
+        renderMessage(msg, false);
+        const chatTab = document.querySelector('[data-tab="chat"]');
+        if (!chatTab.classList.contains('active')) {
+          document.getElementById('chat-notif').classList.add('show');
+        }
       }
     }
   });
   setTimeout(()=>{ firstLoad = false; }, 1000);
+
+  // Placar
   db.ref(`rooms/${state.roomCode}/scoreAcu`).on('value', snap => {
     const v = snap.val(); if (v !== null && v !== state.scoreAcu) { state.scoreAcu=v; document.getElementById('sc-acu').textContent=v; }
   });
   db.ref(`rooms/${state.roomCode}/scoreDef`).on('value', snap => {
     const v = snap.val(); if (v !== null && v !== state.scoreDef) { state.scoreDef=v; document.getElementById('sc-def').textContent=v; }
+  });
+
+  // Sincronização do veredito — instâncias
+  db.ref(`rooms/${state.roomCode}/verdicts`).on('value', snap => {
+    const vds = snap.val();
+    if (!vds) return;
+    ['1a','tj','stj'].forEach(inst => {
+      if (vds[inst] && !instState.verdicts[inst]) {
+        instState.verdicts[inst] = vds[inst];
+        renderInstanceVerdict(inst, vds[inst]);
+      }
+    });
+  });
+
+  // Sincronização dos recursos
+  db.ref(`rooms/${state.roomCode}/recursos`).on('value', snap => {
+    const res = snap.val();
+    if (!res) return;
+    instState.recursos = { ...instState.recursos, ...res };
+  });
+
+  // Sincronização do chat de recursos (TJ/STJ)
+  ['tj','stj'].forEach(inst => {
+    db.ref(`rooms/${state.roomCode}/recursoChat/${inst}`).on('child_added', snap => {
+      const msg = snap.val();
+      if (!msg || msg._init) return;
+      if (msg.sender !== state.myName) {
+        appendRecursoChatMsg(inst, msg);
+      }
+    });
   });
 }
 
@@ -1092,6 +1174,7 @@ function launchGame() {
   document.getElementById('s-game').classList.add('active');
   showTab('caso');
   window.scrollTo(0,0);
+  setTimeout(()=>initNotes(), 300);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1141,10 +1224,90 @@ async function sendMessage() {
   if (!state.solo && messagesRef) {
     try { await messagesRef.push(msg); } catch(e) {}
   }
-  if (text.toLowerCase().includes('juiz') && (text.toLowerCase().includes('veredito')||text.toLowerCase().includes('sentença'))) {
-    setTimeout(()=>requestAIVerdict('1a'), 1000);
-  } else if (state.messages.filter(m=>m.type==='msg').length % 6 === 0) {
-    setTimeout(()=>judgeIntervene(), 800);
+  // Juiz adaptativo — analisa cada mensagem e decide se intervém
+  setTimeout(()=>judgeAdaptiveAnalyze(msg), 900);
+}
+
+// ═══════════════════════════════════════════════════════
+// JUIZ ADAPTATIVO — analisa e intervém quando relevante
+// ═══════════════════════════════════════════════════════
+async function judgeAdaptiveAnalyze(lastMsg) {
+  const c = CASES[state.caseIdx];
+  const allMsgs = state.messages.filter(m=>m.type==='msg');
+  const count = allMsgs.length;
+
+  // Nunca intervém nas primeiras 2 mensagens
+  if (count < 2) return;
+
+  const debateCtx = allMsgs.slice(-8).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    // Fallback: intervém a cada 5 msgs com frases fixas
+    if (count % 5 === 0) {
+      const fallbacks = [
+        'Advogados, o elemento subjetivo ainda não foi devidamente demonstrado. Solicito esclarecimentos.',
+        'A Defesa apresentou excludente de ilicitude — a Acusação deve rebater com as provas disponíveis.',
+        'Qual a qualificadora aplicável ao caso concreto? A dosimetria depende disso.',
+        'O Tribunal nota contradição nos argumentos — solicita que a parte esclareça sua tese.',
+        'A prova testemunhal citada é suficiente ou há outras provas materiais a considerar?',
+        'O nexo causal entre a conduta e o resultado ainda não ficou claro para este Juízo.',
+      ];
+      const txt = fallbacks[Math.floor(count/5) % fallbacks.length];
+      judgePublishMessage(txt);
+    }
+    return;
+  }
+
+  try {
+    const decision = await callGemini(
+      `Você é um Juiz de Direito. Analise o debate jurídico e decida se deve intervir.
+Responda APENAS em JSON: {"intervir": true/false, "motivo": "contradiction|nova_tese|lacuna|qualificadora|nexo_causal|dosimetria|outro", "mensagem": "sua intervenção em 1-2 frases diretas, fazendo uma pergunta ou apontamento jurídico preciso"}
+Só intervenha se detectar: (1) contradição clara entre argumentos, (2) tese nova sem resposta do lado contrário, (3) lacuna jurídica importante, (4) qualificadora ou causa de aumento não explorada, (5) nexo causal ou elemento do tipo ignorado.
+NÃO intervenha por mensagens genéricas ou repetitivas. Seja um juiz exigente e técnico.
+Considere abreviações brasileiras: tb=também, pq=porque, nao=não, mt=muito, etc.`,
+      `CASO: ${c.context_juiz}\n\nDEBATE RECENTE:\n${debateCtx}\n\nÚLTIMA MENSAGEM: ${lastMsg.sender} (${lastMsg.role}): ${lastMsg.text}\n\nDeve o Juiz intervir?`,
+      300
+    );
+    const clean = decision.replace(/```json|```/g,'').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch(e) { return; }
+    if (parsed.intervir && parsed.mensagem) {
+      judgePublishMessage(parsed.mensagem);
+    }
+  } catch(e) {
+    // silencioso — não quebra o chat
+  }
+}
+
+function judgePublishMessage(text) {
+  // Renderiza localmente
+  renderJudgeMessageInChat(text);
+  // Sincroniza para o parceiro via Firebase
+  if (!state.solo && messagesRef) {
+    const judgeMsg = {
+      type:'judge', sender:'Juiz IA', role:'juiz', text,
+      time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    };
+    try { messagesRef.push(judgeMsg); } catch(e) {}
+  }
+}
+
+function renderJudgeMessageInChat(text) {
+  const cm = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg judge';
+  div.innerHTML = `
+    <div class="msg-header">
+      <span class="msg-role juiz">⚖️ JUIZ IA</span>
+      <span class="msg-time">${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+    </div>
+    <div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>')}</div>`;
+  cm.appendChild(div);
+  cm.scrollTop = cm.scrollHeight;
+  // Notifica se não estiver na aba
+  const chatTab = document.querySelector('[data-tab="chat"]');
+  if (!chatTab.classList.contains('active')) {
+    document.getElementById('chat-notif').classList.add('show');
   }
 }
 
@@ -1168,17 +1331,7 @@ function renderMessage(msg, isMine) {
 }
 
 function addJudgeMessage(text) {
-  const cm = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'msg judge';
-  div.innerHTML = `
-    <div class="msg-header">
-      <span class="msg-role juiz">⚖️ JUIZ IA</span>
-      <span class="msg-time">${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
-    </div>
-    <div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>')}</div>`;
-  cm.appendChild(div);
-  cm.scrollTop = cm.scrollHeight;
+  renderJudgeMessageInChat(text);
 }
 
 function addSysMessage(text) {
@@ -1190,42 +1343,82 @@ function addSysMessage(text) {
   cm.scrollTop = cm.scrollHeight;
 }
 
-// ═══════════════════════════════════════════════════════
-// JUDGE INTERVENE — com fallback se sem API key
-// ═══════════════════════════════════════════════════════
+// Mantida para compatibilidade — agora usa judgeAdaptiveAnalyze
 async function judgeIntervene() {
-  const c = CASES[state.caseIdx];
-  const recent = state.messages.slice(-6).map(m=>`${m.sender} (${m.role}): ${m.text}`).join('\n');
-  const typing = document.getElementById('typing-ind');
-  document.getElementById('typing-who').textContent = 'Juiz IA';
-  typing.classList.add('show');
+  judgePublishMessage('O Tribunal solicita que as partes aprofundem os argumentos jurídicos apresentados.');
+}
 
-  const fallbacks = [
-    'O Tribunal nota que o argumento da inevitabilidade ainda não foi suficientemente explorado.',
-    'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado.',
-    'O Ministério Público precisa responder à tese subsidiária da defesa.',
-    'A dosimetria da pena depende da qualificadora ser mantida ou afastada.',
-    'Qual a prova concreta apresentada além do depoimento da parte?',
-  ];
+// ═══════════════════════════════════════════════════════
+// BLOCO DE NOTAS — individual, salvo no localStorage
+// ═══════════════════════════════════════════════════════
+function initNotes() {
+  const ta = document.getElementById('notas-ta');
+  if (!ta) return;
+  const key = `tribunal_notas_${state.roomCode}_${state.myName}`;
+  ta.value = localStorage.getItem(key) || '';
+  ta.addEventListener('input', () => {
+    localStorage.setItem(key, ta.value);
+  });
+}
 
-  if (!geminiKey || !geminiKey.startsWith('AIza')) {
-    await new Promise(r=>setTimeout(r, 1200));
-    typing.classList.remove('show');
-    addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
-    return;
+// ═══════════════════════════════════════════════════════
+// CHAT DE RECURSO — para TJ e STJ (sincronizado)
+// ═══════════════════════════════════════════════════════
+function appendRecursoChatMsg(inst, msg) {
+  const container = document.getElementById(`recurso-chat-msgs-${inst}`);
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = `rc-msg ${msg.role}`;
+  const roleLabel = msg.role==='juiz'?'⚖️ JUIZ IA':msg.role==='acusacao'?'⚔️ ACUSAÇÃO':'🛡️ DEFESA';
+  div.innerHTML = `<div class="rc-msg-hdr ${msg.role}">${roleLabel} · ${msg.sender} · ${msg.time}</div>${msg.text}`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendRecursoMsg(inst) {
+  const inp = document.getElementById(`recurso-chat-inp-${inst}`);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  const msg = {
+    type:'recurso_msg', inst, sender:state.myName, role:state.myRole, text,
+    time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  };
+  appendRecursoChatMsg(inst, msg);
+  if (!state.solo) {
+    try { await db.ref(`rooms/${state.roomCode}/recursoChat/${inst}`).push(msg); } catch(e) {}
   }
+  // Juiz analisa o argumento do recurso
+  setTimeout(()=>judgeRecursoAnalyze(inst, msg), 1200);
+}
 
-  try {
-    const text = await callGemini(
-      `Você é um Juiz de Direito presidindo um debate jurídico simulado. Seja objetivo, didático e imparcial. Máximo 2-3 linhas. Faça uma pergunta desafiadora ou aponte um ponto jurídico não explorado.`,
-      `${c.context_juiz}\n\nDebate recente:\n${recent}\n\nIntervenção breve como juiz.`,
-      300
-    );
-    typing.classList.remove('show');
-    addJudgeMessage(text || fallbacks[0]);
-  } catch(e) {
-    typing.classList.remove('show');
-    addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
+async function judgeRecursoAnalyze(inst, lastMsg) {
+  const c = CASES[state.caseIdx];
+  const instLabel = inst==='tj'?'Tribunal de Justiça':'STJ';
+  const debateOriginal = state.messages.filter(m=>m.type==='msg').slice(-6).map(m=>`${m.sender}: ${m.text}`).join('\n');
+
+  let judgeText = '';
+  if (!geminiKey || !geminiKey.startsWith('AIza')) {
+    judgeText = `O ${instLabel} registra o argumento e aguarda os demais fundamentos do recurso.`;
+  } else {
+    try {
+      judgeText = await callGemini(
+        `Você é um ${inst==='tj'?'Desembargador do TJ':'Ministro do STJ'} em sessão de julgamento de recurso. Reaja ao argumento jurídico apresentado de forma técnica e precisa. Máximo 2 frases. Pode fazer uma pergunta ou apontar fortaleza/fragilidade do argumento.`,
+        `CASO: ${c.context_juiz}\nDEBATE ORIGINAL (resumo): ${debateOriginal}\n\nNO RECURSO, ${lastMsg.sender} (${lastMsg.role}) disse: "${lastMsg.text}"\n\nReaja como ${instLabel}.`,
+        250
+      );
+    } catch(e) {
+      judgeText = `O ${instLabel} registra o argumento para deliberação.`;
+    }
+  }
+  const judgeMsg = {
+    type:'recurso_msg', inst, sender:'Juiz IA', role:'juiz', text: judgeText,
+    time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  };
+  appendRecursoChatMsg(inst, judgeMsg);
+  if (!state.solo) {
+    try { await db.ref(`rooms/${state.roomCode}/recursoChat/${inst}`).push(judgeMsg); } catch(e) {}
   }
 }
 
@@ -1501,6 +1694,11 @@ function renderInstanceVerdict(instancia, v) {
   const instClass = { '1a':'inst-1a','tj':'inst-tj','stj':'inst-stj' };
   const instColors = { '1a':'var(--gold2)','tj':'var(--blue2)','stj':'var(--purple2)' };
 
+  // Salva veredito no Firebase para sincronizar com parceiro
+  if (!state.solo) {
+    try { db.ref(`rooms/${state.roomCode}/verdicts/${instancia}`).set(v); } catch(e) {}
+  }
+
   // Monta HTML do veredito desta instância
   const reformaTag = v.reforma && instancia!=='1a' ? `
     <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;margin-bottom:12px;
@@ -1537,17 +1735,31 @@ function renderInstanceVerdict(instancia, v) {
   let recursoHTML = '';
   if (proxima) {
     const proximaLabel = proxima==='tj'?'Tribunal de Justiça':'STJ';
-    const instRecKey = proxima; // 'tj' ou 'stj'
+    const instRecKey = proxima;
     recursoHTML = `
       <div class="recurso-section" id="recurso-section-${instancia}">
         <div class="recurso-title">// RECURSO PARA O ${proximaLabel.toUpperCase()}</div>
-        <div class="recurso-btns">
-          <button class="btn-recurso acu" id="btn-rec-acu-${instancia}" onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ Acusação Recorre</button>
-          <button class="btn-recurso def" id="btn-rec-def-${instancia}" onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ Defesa Recorre</button>
+
+        <!-- Chat de recurso — debate extra para TJ/STJ -->
+        <div class="recurso-chat-wrap">
+          <div class="recurso-chat-title">💬 DEBATE DO RECURSO — novos argumentos para o ${proximaLabel}</div>
+          <div class="recurso-chat-msgs" id="recurso-chat-msgs-${proxima}"></div>
+          <div class="recurso-chat-input">
+            <input class="recurso-chat-inp" id="recurso-chat-inp-${proxima}" placeholder="Argumento para o ${proximaLabel}..." onkeydown="if(event.key==='Enter')sendRecursoMsg('${proxima}')">
+            <button class="recurso-chat-send" onclick="sendRecursoMsg('${proxima}')">ENVIAR</button>
+          </div>
         </div>
-        <div id="recurso-input-${instancia}" style="display:none;"></div>
-        <div id="recurso-ready-${instancia}" style="display:none;">
-          <button class="btn-reveal" style="margin-top:12px;width:100%;" onclick="requestAIVerdict('${proxima}')">⚖️ Submeter ao ${proximaLabel}</button>
+
+        <div style="margin-top:14px;">
+          <div class="recurso-title">// PEDIDO FORMAL DE RECURSO</div>
+          <div class="recurso-btns">
+            <button class="btn-recurso acu" id="btn-rec-acu-${instancia}" onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ Acusação Recorre</button>
+            <button class="btn-recurso def" id="btn-rec-def-${instancia}" onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ Defesa Recorre</button>
+          </div>
+          <div id="recurso-input-${instancia}" style="display:none;"></div>
+          <div id="recurso-ready-${instancia}" style="display:none;">
+            <button class="btn-reveal" style="margin-top:12px;width:100%;" onclick="requestAIVerdict('${proxima}')">⚖️ Submeter ao ${proximaLabel}</button>
+          </div>
         </div>
       </div>`;
   } else {
@@ -1624,6 +1836,11 @@ function submitRecurso(fromInst, side, toInst) {
 
   if (!instState.recursos[toInst]) instState.recursos[toInst] = {};
   instState.recursos[toInst][side] = texto;
+
+  // Sincroniza com parceiro
+  if (!state.solo) {
+    try { db.ref(`rooms/${state.roomCode}/recursos/${toInst}/${side}`).set(texto); } catch(e) {}
+  }
 
   // Feedback visual
   const container = document.getElementById(`recurso-input-${fromInst}`);
