@@ -544,12 +544,9 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
       <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
     </div>
     <div class="apikey-hint">
-      🆓 Use o <strong style="color:var(--gold2)">Google Gemini — é grátis!</strong><br>
-      1. Acesse <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com →</a><br>
-      2. Clique em <strong>Get API Key → Create API Key</strong><br>
-      3. Cole aqui a chave (começa com <strong>AIza</strong>)<br><br>
-      🔒 A chave fica só na memória desta sessão, nunca sai do dispositivo.<br>
-      Sem chave o Juiz usa respostas fixas de fallback.
+      ⚡ <strong style="color:var(--gold2)">Juiz IA já está ativo!</strong> Powered by Claude — sem chave necessária.<br><br>
+      Quer adicionar Google Gemini como backup? Cole sua chave abaixo (opcional):<br>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → Get API Key →</a>
     </div>
   </div>
 
@@ -887,9 +884,33 @@ const firebaseConfig = {
 };
 
 // ═══════════════════════════════════════════════════════
-// API KEY — GEMINI
+// CLAUDE API — Juiz + Assistente (sempre ativo, sem chave)
 // ═══════════════════════════════════════════════════════
 let geminiKey = localStorage.getItem('tribunal_gemini_key') || '';
+
+// Histórico do Juiz para conversa contínua e inteligente
+let judgeHistory = [];
+
+async function callClaude(systemPrompt, messages, maxTokens=1000) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages,
+    })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.map(b=>b.text||'').join('') || '';
+}
+
+async function callAI(systemPrompt, userPrompt, maxTokens=800, history=[]) {
+  const msgs = [...history, { role:'user', content: userPrompt }];
+  return await callClaude(systemPrompt, msgs, maxTokens);
+}
 
 function onApiKeyInput() {
   const val = document.getElementById('inp-apikey').value.trim();
@@ -898,7 +919,7 @@ function onApiKeyInput() {
   if (val.startsWith('AIza') && val.length > 20) {
     localStorage.setItem('tribunal_gemini_key', val);
     box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva — Juiz IA ativo 🆓 <button onclick="clearApiKey()" style="background:none;border:none;color:var(--red2);font-family:var(--mono);font-size:9px;cursor:pointer;margin-left:8px;">✕ remover</button></div>';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva como backup</div>';
   } else if (val.length > 5) {
     box.style.display = 'block';
     box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com AIza...)</div>';
@@ -909,33 +930,23 @@ function onApiKeyInput() {
 }
 
 function initApiKeyUI() {
-  if (geminiKey) {
-    const inp = document.getElementById('inp-apikey');
-    if (inp) inp.value = geminiKey;
-    const box = document.getElementById('apikey-status-box');
-    box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini carregada — Juiz IA ativo 🆓 <button onclick="clearApiKey()" style="background:none;border:none;color:var(--red2);font-family:var(--mono);font-size:9px;cursor:pointer;margin-left:8px;">✕ remover</button></div>';
-  }
+  const box = document.getElementById('apikey-status-box');
+  box.style.display = 'block';
+  box.innerHTML = '<div class="apikey-status ok">⚡ Juiz IA powered by Claude — sempre ativo, sem chave</div>';
+  if (geminiKey) { const inp = document.getElementById('inp-apikey'); if (inp) inp.value = geminiKey; }
 }
 
 function clearApiKey() {
-  geminiKey = '';
-  localStorage.removeItem('tribunal_gemini_key');
-  const inp = document.getElementById('inp-apikey');
-  if (inp) inp.value = '';
-  const box = document.getElementById('apikey-status-box');
-  box.style.display = 'none';
+  geminiKey = ''; localStorage.removeItem('tribunal_gemini_key');
+  const inp = document.getElementById('inp-apikey'); if (inp) inp.value = '';
 }
 
+// Gemini fallback (não usada mais por padrão)
 async function callGemini(systemPrompt, userPrompt, maxTokens) {
-  const model = 'gemini-2.0-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-  const body = {
-    system_instruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-    generationConfig: { maxOutputTokens: maxTokens || 1200, temperature: 0.72 }
-  };
-  const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!geminiKey?.startsWith('AIza')) throw new Error('Sem chave Gemini');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
+  const body = { system_instruction:{parts:[{text:systemPrompt}]}, contents:[{role:'user',parts:[{text:userPrompt}]}], generationConfig:{maxOutputTokens:maxTokens||1200,temperature:0.72} };
+  const resp = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const data = await resp.json();
   if (data.error) throw new Error(data.error.message);
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1420,6 +1431,23 @@ function setupRealtimeListeners() {
 
   // ── Chat: só msgs novas (orderByChild + startAt) ──
   chatRef = db.ref(`${base}/chat`);
+  // ── Typing indicator sync ──
+  db.ref(`${base}/typing`).on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    const partnerTyping = data[state.partnerName];
+    if (partnerTyping && partnerTyping.active) {
+      document.getElementById('typing-who').textContent = state.partnerName;
+      document.getElementById('typing-ind').classList.add('show');
+    } else {
+      const typingEl = document.getElementById('typing-ind');
+      // Only hide if not currently showing judge typing
+      if (document.getElementById('typing-who').textContent === state.partnerName) {
+        typingEl.classList.remove('show');
+      }
+    }
+  });
+
   chatRef.orderByChild('ts').startAt(_syncStartTs).on('child_added', snap => {
     const msg = snap.val();
     if (!msg || msg.sender === state.myName) return;
@@ -1548,6 +1576,7 @@ function launchGame() {
   judgeLastIntervention = 0; judgeConsecutiveSkips = 0;
   state.pendingReply = null;
   iaChatHistory = [];
+  judgeHistory = [];
   // Reset pedido inputs
   ['acu','def'].forEach(s=>{ const el=document.getElementById(`pena-${s}`); if(el) el.value=''; updatePedidoPreview(s,''); });
   // Lock opponent side
@@ -1613,7 +1642,7 @@ function showTab(name) {
   if (name==='veredito') document.getElementById('veredito-notif').classList.remove('show');
   if (name==='notas') {
     const warn = document.getElementById('ia-nokey-warn');
-    if (warn) warn.style.display = (!geminiKey||!geminiKey.startsWith('AIza')) ? 'block' : 'none';
+    if (warn) warn.style.display = 'none'; // Claude sempre ativo
   }
   vibrateDevice([10]);
 }
@@ -1629,10 +1658,19 @@ function showNotasTab(which) {
 // ═══════════════════════════════════════════════════════
 let pendingReplyText = null;
 
+let _typingTimer = null;
 function onChatInput() {
   const ta = document.getElementById('chat-inp');
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 100) + 'px';
+  // Sync typing indicator
+  if (!state.solo && db && state.roomCode) {
+    db.ref(`rooms/${state.roomCode}/typing/${state.myName}`).set({ active: true, ts: Date.now() });
+    clearTimeout(_typingTimer);
+    _typingTimer = setTimeout(() => {
+      db.ref(`rooms/${state.roomCode}/typing/${state.myName}`).set({ active: false });
+    }, 2500);
+  }
 }
 function onChatKey(e) {
   if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -1715,24 +1753,35 @@ let judgeLastIntervention = 0;
 let judgeConsecutiveSkips = 0;
 let _lastJudgeText = '';
 
+// System prompt do Juiz — personalidade forte e consistente
+function getJudgeSystem(c) {
+  return `Você é Dr. Augusto Melo, Juiz de Direito há 20 anos. Preside este debate jurídico com autoridade, imparcialidade e inteligência.
+
+CASO EM JULGAMENTO: ${c.titulo}
+${c.context_juiz}
+
+SEU ESTILO:
+- Fala direto, sem rodeios. Respostas curtas (1-3 frases no máximo por intervenção espontânea)
+- Questiona argumentos fracos de ambos os lados com igual rigor
+- Cita artigos e jurisprudência quando relevante
+- Mantém o debate focado nos pontos controvertidos
+- Pode fazer perguntas retóricas, apontar contradições, pedir fundamentos
+- Às vezes toma posição provisória para provocar debate
+- Responde qualquer pergunta jurídica relacionada ao caso ou ao direito penal em geral
+- NUNCA quebra o personagem — você É o Juiz, não simula
+
+PROIBIDO: introduções genéricas, "como Juiz vejo que...", explicar que está sendo um personagem.
+PERMITIDO: discordar das partes, fazer perguntas difíceis, mostrar ceticismo, aprovar um bom argumento.`;
+}
+
 async function judgeConsiderIntervention(lastMsg) {
   const now = Date.now();
-  const minInterval = 20000;
+  const minInterval = 18000;
   const msgCount = state.messages.filter(m=>m.type==='msg').length;
   const shouldByTimer = (now - judgeLastIntervention) > minInterval;
   const shouldByCount = msgCount > 0 && msgCount % 3 === 0;
   const txt = lastMsg.text.toLowerCase();
-  const isHighPriority = (
-    txt.includes('absolvição') || txt.includes('absolver') ||
-    txt.includes('condenar') || txt.includes('condena') ||
-    txt.includes('estado de necessidade') || txt.includes('dolo') ||
-    txt.includes('qualificadora') || txt.includes('insignific') ||
-    txt.includes('feminicídio') || txt.includes('tráfico') || txt.includes('homicídio') ||
-    txt.includes('semi-imputab') || txt.includes('excludente') ||
-    txt.includes('art.') || txt.includes('[art') ||
-    txt.includes('súmula') || txt.includes('stj') || txt.includes('jurisprud') ||
-    txt.includes('premeditação') || txt.includes('emboscada') || txt.includes('tese')
-  );
+  const isHighPriority = txt.match(/absolvição|absolver|condenar|condena|estado de necessidade|dolo|qualificadora|insignific|feminicídio|tráfico|homicídio|semi-imputab|excludente|art\.|súmula|stj|jurisprud|premeditação|emboscada|tese|nexo causal|autoria|materialidade/);
   if (isHighPriority && shouldByTimer) {
     judgeLastIntervention = now; judgeConsecutiveSkips = 0;
     setTimeout(()=>judgeIntervene(lastMsg.text, 'tese'), 900);
@@ -1741,7 +1790,7 @@ async function judgeConsiderIntervention(lastMsg) {
     setTimeout(()=>judgeIntervene(lastMsg.text, 'geral'), 1100);
   } else {
     judgeConsecutiveSkips++;
-    if (judgeConsecutiveSkips >= 5 && shouldByTimer) {
+    if (judgeConsecutiveSkips >= 4 && shouldByTimer) {
       judgeLastIntervention = now; judgeConsecutiveSkips = 0;
       setTimeout(()=>judgeIntervene(lastMsg.text, 'lacuna'), 1000);
     }
@@ -1782,11 +1831,13 @@ function addJudgeMessage(text, shouldSync = true) {
   div.className = 'msg judge';
   const ts = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const safeText = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
-  // Guarda o texto para "reply"
-  const escText = text.replace(/'/g, '&apos;').substring(0, 120);
+  const escText = text.replace(/'/g, '&apos;').substring(0, 200);
+  // Add to judge history for continuity
+  judgeHistory.push({ role:'assistant', content: text });
+  if (judgeHistory.length > 20) judgeHistory = judgeHistory.slice(-20);
   div.innerHTML = `
     <div class="msg-header">
-      <span class="msg-role juiz">⚖️ JUIZ IA</span>
+      <span class="msg-role juiz">⚖️ JUIZ IA · Dr. Augusto</span>
       <span class="msg-time">${ts}</span>
     </div>
     <div class="msg-bubble">
@@ -1799,7 +1850,6 @@ function addJudgeMessage(text, shouldSync = true) {
   const chatTab = document.querySelector('[data-tab="chat"]');
   if (chatTab && !chatTab.classList.contains('active')) {
     document.getElementById('chat-notif').classList.add('show');
-    // Anima o ícone do tab
     chatTab.classList.add('judge-flash');
     setTimeout(()=>chatTab.classList.remove('judge-flash'), 700);
     vibrateDevice([40, 20, 40]);
@@ -1819,73 +1869,38 @@ function addSysMessage(text, shouldSync = true) {
 }
 
 // ═══════════════════════════════════════════════════════
-// JUDGE INTERVENE — versão v3: mais ativo, responde a menções e replies
+// JUDGE INTERVENE — Claude com histórico, inteligente e autônomo
 // ═══════════════════════════════════════════════════════
 async function judgeIntervene(lastText, tipo) {
   const c = CASES[state.caseIdx];
-  const recent = state.messages.slice(-8).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+  const recent = state.messages.slice(-10).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
   const typing = document.getElementById('typing-ind');
-  document.getElementById('typing-who').textContent = 'Juiz IA';
+  document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
   typing.classList.add('show');
 
-  const fallbacksByTipo = {
-    mention: [
-      'O Tribunal está ouvindo. Continue com seu argumento — qual o fundamento legal específico?',
-      'Sim, Advogado? O Tribunal aguarda. Seja objetivo na fundamentação.',
-      'Pode prosseguir. O Juiz acompanha os argumentos.',
-    ],
-    reply: [
-      'Entendido. E qual a prova concreta que sustenta essa posição?',
-      'O Tribunal anota. Parte contrária, tem algo a acrescentar?',
-      'Bom ponto. Mas a questão central ainda não foi respondida: qual o nexo causal demonstrado?',
-    ],
-    tese: [
-      'Advogado(a), essa tese precisa de sustentação legal mais sólida. Qual dispositivo fundamenta especificamente isso?',
-      'O Tribunal nota contradição: se essa tese for aceita, como se compatibiliza com o argumento anterior da mesma parte?',
-      'Interessante, mas o elemento subjetivo do tipo ainda não foi enfrentado. Qual a intenção concreta do réu?',
-    ],
-    lacuna: [
-      'O debate está avançado, mas nenhuma das partes enfrentou ainda o ponto mais controverso. Quem vai?',
-      'O Ministério Público ainda não demonstrou o nexo causal de forma objetiva. Isso é determinante.',
-      'A Defesa ainda não apresentou uma tese alternativa concreta. Somente negar não é suficiente.',
-    ],
-    geral: [
-      'O Tribunal nota que há pontos importantes ainda não explorados pelas partes. Quem avança?',
-      'Advogados: o elemento subjetivo do tipo precisa ser mais bem demonstrado por ambas as partes.',
-      'A dosimetria da pena depende diretamente da qualificadora ser mantida ou afastada. Qual a posição de cada parte?',
-      'Qual a prova concreta apresentada além das alegações das partes?',
-    ],
-  };
-
-  const fb = fallbacksByTipo[tipo] || fallbacksByTipo.geral;
-
-  if (!geminiKey || !geminiKey.startsWith('AIza')) {
-    await new Promise(r=>setTimeout(r, 1200));
-    typing.classList.remove('show');
-    addJudgeMessage(fb[Math.floor(Math.random()*fb.length)]);
-    return;
-  }
-
-  const promptsByTipo = {
-    mention: `O advogado/a mencionou o Juiz diretamente dizendo: "${lastText}"\n\nResponda como Juiz sendo interpelado diretamente. Seja sucinto, autoritativo e direcione o argumento. Máximo 2 linhas.`,
-    reply: `O advogado/a está respondendo diretamente ao Juiz, que disse: "${_lastJudgeText}"\n\nA resposta do advogado foi: "${lastText}"\n\nReagir como Juiz à resposta recebida. Ser consistente. Máximo 2 linhas.`,
-    tese: `O advogado acabou de argumentar: "${lastText}"\n\nIntervenha brevemente como juiz: questione a tese, aponte uma contradição, ou peça fundamentação legal específica. Máximo 2 linhas. Seja direto.`,
-    lacuna: `O debate está acontecendo mas há lacunas. Aponte UMA lacuna importante que nenhuma das partes abordou ainda. Máximo 2 linhas. Seja específico ao caso.`,
-    geral: `Analise o debate recente e faça UMA intervenção breve como juiz: questione, aponte contradição, ou sinalize algo relevante não explorado. Máximo 2 linhas.`,
+  const contextByTipo = {
+    mention: `${lastText}\n\n[O advogado te interpelou diretamente. Responda direto, 1-2 frases.]`,
+    reply: `O Juiz havia dito: "${_lastJudgeText}"\nO advogado respondeu: "${lastText}"\n\n[Reagir à resposta recebida. Seja consistente com o que disse antes. 1-2 frases.]`,
+    tese: `Último argumento: "${lastText}"\n\nDebate recente:\n${recent}\n\n[Questionar essa tese ou pedir fundamento específico. 1-2 frases cortantes.]`,
+    lacuna: `Debate recente:\n${recent}\n\n[Aponte UMA lacuna que ambas as partes ignoraram. Seja específico. 1-2 frases.]`,
+    geral: `Debate recente:\n${recent}\n\n[Intervenha sobre o ponto mais relevante não resolvido. 1-2 frases de impacto.]`,
   };
 
   try {
-    const text = await callGemini(
-      `Você é um Juiz de Direito presidindo debate jurídico simulado. Seja objetivo, imparcial e participativo. Use linguagem formal mas direta. IMPORTANTE: interprete o que foi dito, não a forma. Responda sempre como Juiz falando com as partes. Nunca quebre o personagem.`,
-      `${c.context_juiz}\n\nDebate recente:\n${recent}\n\n${promptsByTipo[tipo] || promptsByTipo.geral}`,
-      300
-    );
+    // Build history for context continuity
+    const historyForCall = judgeHistory.slice(-12);
+    const userMsg = `DEBATE ATUAL:\n${recent}\n\n${contextByTipo[tipo] || contextByTipo.geral}`;
+    const text = await callClaude(getJudgeSystem(c), [...historyForCall, {role:'user', content: userMsg}], 300);
     typing.classList.remove('show');
     judgeLastIntervention = Date.now();
-    addJudgeMessage(text || fb[0]);
+    // Add user turn to history BEFORE addJudgeMessage (which adds assistant turn)
+    judgeHistory.push({ role:'user', content: userMsg });
+    if (judgeHistory.length > 22) judgeHistory = judgeHistory.slice(-22);
+    addJudgeMessage(text || 'O Tribunal aguarda uma fundamentação mais sólida.');
   } catch(e) {
     typing.classList.remove('show');
-    addJudgeMessage(fb[Math.floor(Math.random()*fb.length)]);
+    const fallbacks = ['Qual o fundamento legal específico para essa posição?', 'O nexo causal ainda não foi demonstrado de forma objetiva.', 'A parte contrária, tem algo a acrescentar a esse ponto?'];
+    addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
   }
 }
 
@@ -1984,12 +1999,10 @@ const instState={verdicts:{'1a':null,'tj':null,'stj':null},recursos:{tj:{},stj:{
 const instChatMsgs={tj:[],stj:[]};
 
 function buildVerdictLocked(){
-  const hasKey=geminiKey&&geminiKey.startsWith('AIza');
   document.getElementById('verdict-wrap').innerHTML=`
     <div class="verdict-locked">
       <span class="vl-icon">🔒</span><div class="vl-title">Veredito Selado</div>
       <div class="vl-sub">O Juiz IA analisará <strong>apenas o que foi dito no debate</strong>.<br><span style="color:var(--gold2);">Registre os pedidos na aba 📨 PEDIDO antes de solicitar.</span></div>
-      ${!hasKey?`<div class="nokey-warn">⚠️ Sem chave Gemini — veredito com base fixa.<br><a href="https://aistudio.google.com/app/apikey" target="_blank">Obter chave grátis →</a></div>`:''}
       <button class="btn-reveal" id="btn-reveal-main" onclick="requestAIVerdict('1a')">⚖️ Solicitar 1ª Instância</button>
       <div class="ai-loading" id="ai-loading"><div class="wc-spinner" style="width:24px;height:24px;border-width:2px;margin:0;"></div><span id="ai-loading-txt">O Juiz IA está analisando...</span></div>
     </div>`;
@@ -2016,9 +2029,8 @@ async function requestAIVerdict(instancia){
   const instInstructions={'1a':'Você é Juiz de 1ª Instância. Profira sentença analisando EXCLUSIVAMENTE o que foi dito no debate.','tj':'Você é Desembargador do TJ. Analise o debate E os fundamentos do recurso. Pode confirmar ou reformar.','stj':'Você é Ministro do STJ. Analise apenas questões de direito federal, divergência jurisprudencial ou súmula.'};
   const systemPrompt=instInstructions[instancia]+` Responda APENAS em JSON válido, sem markdown.`;
   const userPrompt=`${c.context_juiz}\n\nDEBATE:\n${debateLog}\n\nPEDIDOS:\nAcusação: ${penaAcu}\nDefesa: ${penaDef}\nCalculadora: ${calcVal}\nPlacar: Acusação ${state.scoreAcu} × Defesa ${state.scoreDef}${sentencaAnterior}${recursosCtx}\n\nJSON:\n{"resultado":"condenado|absolvido|parcialmente_condenado","nome_resultado":"CONDENADO|ABSOLVIDO|CONDENADO PARCIALMENTE","icon":"emoji","pena":"texto","ratio":"2-3 frases","fundamentacao":"análise completa","reforma":"manteve|reformou|reformou parcialmente","artigos":["Art. X"]}`;
-  if(!geminiKey||!geminiKey.startsWith('AIza')){await new Promise(r=>setTimeout(r,2000));const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);return;}
   try{
-    const raw=await callGemini(systemPrompt,userPrompt,1400);const clean=raw.replace(/```json|```/g,'').trim();
+    const raw=await callClaude(systemPrompt,[{role:'user',content:userPrompt}],1400);const clean=raw.replace(/```json|```/g,'').trim();
     let v;try{v=JSON.parse(clean);}catch(e){v=null;}
     if(v){instState.verdicts[instancia]=v;renderInstanceVerdict(instancia,v);await pushVerdict(instancia,v);}
     else{const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);}
@@ -2110,8 +2122,7 @@ async function judgeInstIntervene(inst){
   const c=CASES[state.caseIdx];const msgs=instChatMsgs[inst]||[];const el=document.getElementById(`inst-chat-msgs-${inst}`);if(!el)return;
   const instLabel=inst==='tj'?'Tribunal de Justiça':'STJ';
   const fallbacks={tj:['O TJ pondera: a questão de mérito foi esgotada em 1ª instância?','Há jurisprudência que fundamente a reforma pleiteada?'],stj:['O STJ analisa apenas direito. Qual violação específica de lei federal?','Existe súmula do STJ sobre o ponto?']};
-  if(!geminiKey||!geminiKey.startsWith('AIza')){const fb=fallbacks[inst]||fallbacks.tj;const div=document.createElement('div');div.className='inst-msg-j';div.textContent='⚖️ '+fb[Math.floor(Math.random()*fb.length)];el.appendChild(div);el.scrollTop=el.scrollHeight;return;}
-  try{const recent=msgs.slice(-4).map(m=>`${m.sender}: ${m.text}`).join('\n');const text=await callGemini(`Você é ${instLabel}. Intervenção brevíssima (1 linha) sobre os argumentos. Seja jurídico.`,`${c.context_juiz}\n\nArgumentos:\n${recent}`,180);if(text){const div=document.createElement('div');div.className='inst-msg-j';div.textContent='⚖️ '+text;el.appendChild(div);el.scrollTop=el.scrollHeight;}}catch(e){}
+  try{const recent=msgs.slice(-4).map(m=>`${m.sender}: ${m.text}`).join('\n');const text=await callClaude(`Você é ${instLabel} num debate jurídico simulado. Faça UMA intervenção curta (1 linha) sobre os argumentos apresentados. Seja objetivo e jurídico. ${c.context_juiz}`,[{role:'user',content:`Argumentos:\n${recent}\n\nIntervenha brevemente.`}],150);if(text){const div=document.createElement('div');div.className='inst-msg-j';div.textContent='⚖️ '+text.trim().split('\n')[0];el.appendChild(div);el.scrollTop=el.scrollHeight;}}catch(e){}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2145,40 +2156,104 @@ function updatePedidoPreview(side, val) {
 // ═══════════════════════════════════════════════════════
 // IA ASSISTENTE (Notas) — chat privado com Gemini
 // ═══════════════════════════════════════════════════════
-let iaChatHistory=[];
-function initIaAssist(){
-  iaChatHistory=[];const msgs=document.getElementById('ia-chat-msgs');if(msgs)msgs.innerHTML='';
-  const warn=document.getElementById('ia-nokey-warn');if(warn)warn.style.display=(!geminiKey||!geminiKey.startsWith('AIza'))?'block':'none';
+// ═══════════════════════════════════════════════════════
+// IA ASSISTENTE — Claude, histórico completo, sem chave necessária
+// ═══════════════════════════════════════════════════════
+let iaChatHistory = [];
+
+function initIaAssist() {
+  iaChatHistory = [];
+  const msgs = document.getElementById('ia-chat-msgs');
+  if (msgs) msgs.innerHTML = '';
+  // Hide no-key warning — Claude sempre disponível
+  const warn = document.getElementById('ia-nokey-warn');
+  if (warn) warn.style.display = 'none';
+  // Show welcome message
+  setTimeout(() => {
+    const c = CASES[state.caseIdx];
+    const papel = state.myRole === 'acusacao' ? 'Acusação ⚔️' : 'Defesa 🛡️';
+    appendIaMsg('ai', 'IA',
+      `Olá! Sou seu assistente jurídico privado neste caso — só você me vê.\n\nVocê está como **${papel}** no caso *${c.titulo}*.\n\nPosso te ajudar com estratégia, argumentos, artigos, jurisprudência, ou qualquer dúvida jurídica. Pergunte à vontade!`
+    );
+  }, 300);
 }
-function onIaInpInput(){const ta=document.getElementById('ia-inp');ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,80)+'px';}
-function onIaInpKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendIaMsg();}}
-function iaQuickAsk(text){document.getElementById('ia-inp').value=text;sendIaMsg();}
-async function sendIaMsg(){
-  const inp=document.getElementById('ia-inp');const text=inp.value.trim();if(!text)return;
-  inp.value='';inp.style.height='auto';const btn=document.getElementById('ia-send-btn');btn.disabled=true;
-  appendIaMsg('user',state.myName||'Você',text);
-  const c=CASES[state.caseIdx];const meuPapel=state.myRole==='acusacao'?'ACUSAÇÃO ⚔️':'DEFESA 🛡️';
-  const systemCtx=`Você é assistente jurídico estratégico privado — só o usuário vê. Ajuda a parte da ${meuPapel} no caso: ${c.titulo}.\n\nContexto: ${c.context_juiz}\n\nSeja estratégico, prático. Linguagem acessível mas precisa. Máximo 3 parágrafos. Sem markdown excessivo.`;
-  iaChatHistory.push({role:'user',parts:[{text}]});
-  if(!geminiKey||!geminiKey.startsWith('AIza')){appendIaMsg('ai','Assistente','⚠️ Configure sua chave Gemini gratuita no lobby para ativar o assistente.');btn.disabled=false;return;}
-  const loadId='ia-load-'+Date.now();const msgs=document.getElementById('ia-chat-msgs');
-  const loadDiv=document.createElement('div');loadDiv.id=loadId;loadDiv.className='ia-msg ai';loadDiv.innerHTML='<div class="ia-msg-who">🤖 ASSISTENTE</div><div class="typing-dots"><span></span><span></span><span></span></div>';
-  msgs.appendChild(loadDiv);msgs.scrollTop=msgs.scrollHeight;
-  try{
-    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
-    const body={system_instruction:{parts:[{text:systemCtx}]},contents:iaChatHistory,generationConfig:{maxOutputTokens:600,temperature:0.75}};
-    const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await resp.json();const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Não consegui processar. Tente novamente.';
-    iaChatHistory.push({role:'model',parts:[{text:reply}]});
-    const ld=document.getElementById(loadId);if(ld)ld.remove();appendIaMsg('ai','Assistente',reply);
-  }catch(e){const ld=document.getElementById(loadId);if(ld)ld.remove();appendIaMsg('ai','Assistente','Erro ao conectar. Verifique sua chave Gemini.');}
-  btn.disabled=false;
+
+function onIaInpInput() {
+  const ta = document.getElementById('ia-inp');
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 80) + 'px';
 }
-function appendIaMsg(type,who,text){
-  const msgs=document.getElementById('ia-chat-msgs');if(!msgs)return;
-  const div=document.createElement('div');div.className=`ia-msg ${type}`;
-  div.innerHTML=`<div class="ia-msg-who">${type==='ai'?'🤖 ASSISTENTE':'👤 '+who.toUpperCase()}</div><div>${text.replace(/\n/g,'<br>')}</div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+function onIaInpKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendIaMsg(); }
+}
+function iaQuickAsk(text) {
+  document.getElementById('ia-inp').value = text;
+  sendIaMsg();
+}
+
+async function sendIaMsg() {
+  const inp = document.getElementById('ia-inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; inp.style.height = 'auto';
+  const btn = document.getElementById('ia-send-btn');
+  btn.disabled = true;
+  appendIaMsg('user', state.myName || 'Você', text);
+
+  const c = CASES[state.caseIdx];
+  const meuPapel = state.myRole === 'acusacao' ? 'ACUSAÇÃO ⚔️' : 'DEFESA 🛡️';
+  const systemCtx = `Você é um advogado experiente e assistente jurídico estratégico privado. Só o usuário vê esta conversa.
+
+CASO: ${c.titulo}
+CLIENTE: Parte da ${meuPapel}
+CONTEXTO JURÍDICO: ${c.context_juiz}
+
+REGRAS:
+- Responda qualquer pergunta jurídica, não apenas sobre o caso
+- Seja estratégico, direto, prático
+- Use linguagem acessível mas juridicamente precisa
+- Pode responder em markdown leve (negrito, listas)
+- Se perguntado sobre estratégia, seja específico e ousado
+- Máximo 4 parágrafos por resposta
+- Se o usuário perguntar algo fora do direito, responda normalmente como assistente inteligente`;
+
+  // Build history for Claude (max 20 turns)
+  const historyForCall = iaChatHistory.slice(-20);
+  iaChatHistory.push({ role: 'user', content: text });
+
+  // Show loading
+  const loadId = 'ia-load-' + Date.now();
+  const msgs = document.getElementById('ia-chat-msgs');
+  const loadDiv = document.createElement('div');
+  loadDiv.id = loadId; loadDiv.className = 'ia-msg ai';
+  loadDiv.innerHTML = '<div class="ia-msg-who">🤖 ASSISTENTE</div><div class="typing-dots"><span></span><span></span><span></span></div>';
+  msgs.appendChild(loadDiv); msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const reply = await callClaude(systemCtx, [...historyForCall, { role: 'user', content: text }], 800);
+    iaChatHistory.push({ role: 'assistant', content: reply });
+    if (iaChatHistory.length > 40) iaChatHistory = iaChatHistory.slice(-40);
+    const ld = document.getElementById(loadId); if (ld) ld.remove();
+    appendIaMsg('ai', 'IA', reply);
+  } catch(e) {
+    const ld = document.getElementById(loadId); if (ld) ld.remove();
+    appendIaMsg('ai', 'IA', '⚠️ Erro de conexão. Verifique sua internet e tente novamente.\n\nDetalhe: ' + (e.message || 'Erro desconhecido'));
+  }
+  btn.disabled = false;
+}
+
+function appendIaMsg(type, who, text) {
+  const msgs = document.getElementById('ia-chat-msgs');
+  if (!msgs) return;
+  const div = document.createElement('div');
+  div.className = `ia-msg ${type}`;
+  // Render basic markdown
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+  div.innerHTML = `<div class="ia-msg-who">${type==='ai'?'🤖 ASSISTENTE':'👤 '+who.toUpperCase()}</div><div>${formatted}</div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
 }
 
 // ═══════════════════════════════════════════════════════
