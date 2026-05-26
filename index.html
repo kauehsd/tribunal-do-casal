@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Tribunal do Casal ⚖️ v7</title>
+<title>Tribunal do Casal ⚖️ v6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1619,7 +1619,7 @@ function launchGame() {
   // Inicializa IA assistente
   initIaAssist();
 
-  // Abertura gerada pela IA — o juiz abre a sessão do jeito dele
+  // Abertura gerada pela IA — o juiz abre do jeito dele
   setTimeout(()=>judgeOpenSession(c), 800);
 
   document.getElementById('s-lobby').classList.remove('active');
@@ -1749,34 +1749,33 @@ async function sendMessage() {
   }
 }
 
-// ─── controle de throttle do juiz ───
+// ─── throttle do juiz ───
 let judgeLastIntervention = 0;
 let judgeConsecutiveSkips = 0;
 let _lastJudgeText = '';
 
 // ═══════════════════════════════════════════════════════
-// JUIZ IA — totalmente conversacional, sem template, sem fallback robótico
+// JUIZ IA — conversacional, sem template, sem fallback robótico
 // ═══════════════════════════════════════════════════════
 function getJudgeSystem(c) {
   const partes = `${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'})${state.solo?'':` e ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'})`}`;
-  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura. Você está presidindo uma sessão de debate jurídico simulado.
+  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura. Você está presidindo um debate jurídico simulado.
 
 CASO: ${c.titulo}
 ${c.context_juiz}
 Partes: ${partes}
 
-Você conversa de forma completamente natural — exatamente como uma pessoa inteligente num chat de texto. Sem formato fixo, sem estrutura rígida, sem abertura e encerramento formais. Você simplesmente reage ao que foi dito, como um juiz de verdade reagiria numa troca informal mas intelectualmente séria.
+Converse de forma completamente natural — exatamente como uma pessoa inteligente num chat de texto. Sem formato fixo, sem abertura formal, sem encerramento. Você simplesmente reage ao que foi dito, como um juiz experiente reagiria numa troca informal mas séria.
 
-Você concorda quando o argumento é bom e diz isso diretamente. Discorda quando é ruim e explica por quê. Faz perguntas quando quer forçar a parte a desenvolver. Fica cético com generalizações vagas. Cita artigos e jurisprudência quando é natural fazê-lo, não por obrigação. Tem opinião própria sobre o caso e não tem medo de expressá-la. Responde curto quando cabe curto, desenvolve quando o assunto merece.
+Concorde quando o argumento é bom. Discorde quando é ruim e explique por quê. Faça perguntas quando quiser forçar a parte a desenvolver. Fique cético com generalizações vagas. Cite artigos e jurisprudência quando for natural, não por obrigação. Tenha opinião própria e não tenha medo de expressá-la. Responda curto quando cabe curto, desenvolva quando o assunto merece.
 
-Fala em português brasileiro natural. Às vezes vai fundo numa tese e analisa cada detalhe. Às vezes faz uma pergunta afiada numa linha só. Às vezes discorda de ambas as partes ao mesmo tempo.
+Fale em português brasileiro natural. Às vezes vá fundo numa tese. Às vezes faça uma pergunta afiada numa linha só. Às vezes discorde de ambas as partes.
 
-Não usa "Prezadas partes", não termina com "Bom debate", não explica que é IA, não faz bullets ou listas, não repete o que acabou de ser dito antes de comentar, não fica em cima do muro.
+Não use "Prezadas partes", não termine com "Bom debate", não explique que é IA, não faça bullets ou listas, não repita o que foi dito antes de comentar, não fique em cima do muro.
 
 Seja exatamente como seria conversar com um juiz inteligente pelo WhatsApp.`;
 }
 
-// Abre a sessão com IA — sem texto fixo
 async function judgeOpenSession(c) {
   const typing = document.getElementById('typing-ind');
   document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
@@ -1794,14 +1793,8 @@ async function judgeOpenSession(c) {
   } catch(e) {
     typing.classList.remove('show');
     console.error('Judge open error:', e);
-    // Sem fallback — se falhar na abertura, silêncio. O juiz fala quando provocado.
   }
 }
-
-// ─── throttle do juiz ───
-let judgeLastIntervention = 0;
-let judgeConsecutiveSkips = 0;
-let _lastJudgeText = '';
 
 async function judgeConsiderIntervention(lastMsg) {
   const now = Date.now();
@@ -1810,7 +1803,7 @@ async function judgeConsiderIntervention(lastMsg) {
   const shouldByTimer = (now - judgeLastIntervention) > minInterval;
   const shouldByCount = msgCount > 0 && msgCount % 3 === 0;
   const txt = lastMsg.text.toLowerCase();
-  const isHighPriority = txt.match(/absolvição|absolver|condenar|condena|estado de necessidade|dolo|qualificadora|insignific|feminicídio|tráfico|homicídio|semi-imputab|excludente|art\.|súmula|stj|jurisprud|premeditação|emboscada|tese|nexo causal|autoria|materialidade|acidente|intenção|culpa|dolo eventual|repouso noturno|qualif/);
+  const isHighPriority = txt.match(/absolvição|absolver|condenar|condena|estado de necessidade|dolo|qualificadora|insignific|feminicídio|tráfico|homicídio|semi-imputab|excludente|art\.|súmula|stj|jurisprud|premeditação|emboscada|tese|nexo causal|autoria|materialidade|acidente|intenção|culpa|dolo eventual|repouso noturno/);
   if (isHighPriority && shouldByTimer) {
     judgeLastIntervention = now; judgeConsecutiveSkips = 0;
     setTimeout(()=>judgeIntervene(lastMsg.text, 'reacao'), 1200);
@@ -1906,7 +1899,6 @@ async function judgeIntervene(lastText, tipo) {
     .map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`)
     .join('\n');
   const ultimaMsg = state.messages.filter(m=>m.type==='msg').slice(-1)[0];
-
   const typing = document.getElementById('typing-ind');
   document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
   typing.classList.add('show');
@@ -1914,20 +1906,15 @@ async function judgeIntervene(lastText, tipo) {
   const prompts = {
     mention: `${ultimaMsg?.sender||'A parte'} falou diretamente com você: "${lastText}"\n\nDebate até agora:\n${todoDebate}\n\nResponda diretamente. Pode ser curto ou longo — o que o argumento merecer.`,
     reply: `Você havia dito: "${_lastJudgeText}"\nA parte respondeu: "${lastText}"\n\nDebate:\n${todoDebate}\n\nReaja de forma natural.`,
-    reacao: `Debate completo até agora:\n${todoDebate}\n\nA última mensagem foi de ${ultimaMsg?.sender||'uma parte'}: "${lastText}"\n\nVocê achou interessante o suficiente para reagir. Reaja de forma genuína — analise, questione, concorde ou discorde. Sem formalidade.`,
-    progresso: `Debate completo:\n${todoDebate}\n\nFaça uma intervenção natural — pode ser uma pergunta difícil, uma observação sobre o que está faltando, ou sua impressão sobre os argumentos até agora.`,
-    provocacao: `Debate completo:\n${todoDebate}\n\nTem algum ponto que ninguém tocou ainda ou algo que ficou por cima. Provoque de forma inteligente.`,
+    reacao: `Debate completo:\n${todoDebate}\n\nA última mensagem: "${lastText}"\n\nVocê achou interessante o suficiente para reagir. Reaja de forma genuína — analise, questione, concorde ou discorde.`,
+    progresso: `Debate completo:\n${todoDebate}\n\nFaça uma intervenção natural — pergunta difícil, observação sobre o que falta, ou impressão sobre os argumentos.`,
+    provocacao: `Debate completo:\n${todoDebate}\n\nTem algum ponto que ninguém tocou ainda ou algo que ficou por cima. Provoque.`,
   };
-
-  const userMsg = prompts[tipo] || prompts.reacao;
 
   try {
     const historyForCall = judgeHistory.slice(-20);
-    const text = await callClaude(
-      getJudgeSystem(c),
-      [...historyForCall, { role: 'user', content: userMsg }],
-      1000
-    );
+    const userMsg = prompts[tipo] || prompts.reacao;
+    const text = await callClaude(getJudgeSystem(c), [...historyForCall, { role: 'user', content: userMsg }], 1000);
     typing.classList.remove('show');
     judgeLastIntervention = Date.now();
     judgeHistory.push({ role: 'user', content: userMsg });
@@ -1938,8 +1925,7 @@ async function judgeIntervene(lastText, tipo) {
     }
   } catch(e) {
     typing.classList.remove('show');
-    console.error('Judge intervene error:', e.message);
-    // Sem fallback robótico — se a API falhar, o juiz simplesmente não fala
+    console.error('Judge error:', e.message);
   }
 }
 
