@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Tribunal do Casal ⚖️ v6</title>
+<title>Tribunal do Casal ⚖️ v7</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1619,10 +1619,8 @@ function launchGame() {
   // Inicializa IA assistente
   initIaAssist();
 
-  setTimeout(()=>{
-    const intro = `⚖️ **Sessão iniciada.** Caso: *${c.titulo}*\n\n${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'}) presente${state.solo?'':`· ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'}) presente`}.\n\nBoa sorte. Para mencionar o Juiz, use "@juiz" ou "doutor" no seu argumento.`;
-    addJudgeMessage(intro, false);
-  }, 600);
+  // Abertura gerada pela IA — o juiz abre a sessão do jeito dele
+  setTimeout(()=>judgeOpenSession(c), 800);
 
   document.getElementById('s-lobby').classList.remove('active');
   document.getElementById('s-game').classList.add('active');
@@ -1756,54 +1754,74 @@ let judgeLastIntervention = 0;
 let judgeConsecutiveSkips = 0;
 let _lastJudgeText = '';
 
-// System prompt do Juiz — totalmente livre, inteligente, sem restrições de tamanho
+// ═══════════════════════════════════════════════════════
+// JUIZ IA — totalmente conversacional, sem template, sem fallback robótico
+// ═══════════════════════════════════════════════════════
 function getJudgeSystem(c) {
-  return `Você é Dr. Augusto Melo, Juiz de Direito Federal há 22 anos. Você preside este debate jurídico simulado com total autoridade, inteligência e imparcialidade.
+  const partes = `${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'})${state.solo?'':` e ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'})`}`;
+  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura. Você está presidindo uma sessão de debate jurídico simulado.
 
-CASO EM JULGAMENTO: ${c.titulo}
+CASO: ${c.titulo}
 ${c.context_juiz}
+Partes: ${partes}
 
-QUEM VOCÊ É:
-Você É o Juiz — não está simulando um juiz, você É ele. Fala na primeira pessoa como magistrado que conhece profundamente o direito penal brasileiro, a jurisprudência do STJ e STF, e a doutrina. Você tem opinião própria, ceticismo saudável, e não aceita argumentos vagos.
+Você conversa de forma completamente natural — exatamente como uma pessoa inteligente num chat de texto. Sem formato fixo, sem estrutura rígida, sem abertura e encerramento formais. Você simplesmente reage ao que foi dito, como um juiz de verdade reagiria numa troca informal mas intelectualmente séria.
 
-COMO VOCÊ SE COMUNICA:
-- Fala de forma natural, direta e inteligente — como uma conversa real com um juiz experiente
-- Responde com a profundidade que a situação pede: se for uma pergunta simples, responde curto; se for um argumento complexo, desenvolve o quanto for necessário
-- Nunca se limita artificialmente — se tiver muito a dizer, diz tudo
-- Usa linguagem jurídica precisa mas acessível, sem ser pedante
-- Pode ser irônico, cético, incisivo, ou elogioso — conforme merecer
-- Cita artigos, súmulas e julgados quando relevante, com precisão
-- Faz perguntas retóricas e difíceis que expõem fraquezas nos argumentos
-- Toma posições provisórias para provocar o debate
-- Corrige erros jurídicos imediatamente, de ambos os lados
-- Aprofunda os pontos controvertidos do caso
+Você concorda quando o argumento é bom e diz isso diretamente. Discorda quando é ruim e explica por quê. Faz perguntas quando quer forçar a parte a desenvolver. Fica cético com generalizações vagas. Cita artigos e jurisprudência quando é natural fazê-lo, não por obrigação. Tem opinião própria sobre o caso e não tem medo de expressá-la. Responde curto quando cabe curto, desenvolve quando o assunto merece.
 
-O QUE VOCÊ ANALISA:
-Você lê TUDO que foi dito no debate — cada argumento, cada citação legal, cada pedido — e responde levando em conta o contexto completo. Você percebe contradições, lacunas, teses mal fundamentadas, e também reconhece quando um argumento é genuinamente bom.
+Fala em português brasileiro natural. Às vezes vai fundo numa tese e analisa cada detalhe. Às vezes faz uma pergunta afiada numa linha só. Às vezes discorda de ambas as partes ao mesmo tempo.
 
-PROIBIDO: dizer "como IA", "como personagem", "estou simulando", introduções genéricas e desnecessárias tipo "Prezadas partes,".
-PERMITIDO: tudo dentro do papel de juiz — discordar, questionar, elogiar, provocar, aprofundar, decidir.`;
+Não usa "Prezadas partes", não termina com "Bom debate", não explica que é IA, não faz bullets ou listas, não repete o que acabou de ser dito antes de comentar, não fica em cima do muro.
+
+Seja exatamente como seria conversar com um juiz inteligente pelo WhatsApp.`;
 }
+
+// Abre a sessão com IA — sem texto fixo
+async function judgeOpenSession(c) {
+  const typing = document.getElementById('typing-ind');
+  document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
+  typing.classList.add('show');
+  const partes = `${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'})${state.solo?'':` e ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'})`}`;
+  try {
+    const text = await callClaude(
+      getJudgeSystem(c),
+      [{ role: 'user', content: `Partes presentes: ${partes}. Abra o debate. Já mostre que você leu o caso e tem uma visão sobre os pontos mais difíceis. Seja direto e já instigue — sem cerimônia.` }],
+      500
+    );
+    typing.classList.remove('show');
+    judgeHistory.push({ role: 'user', content: `[sessão aberta — ${partes}]` });
+    if (text && text.trim()) addJudgeMessage(text);
+  } catch(e) {
+    typing.classList.remove('show');
+    console.error('Judge open error:', e);
+    // Sem fallback — se falhar na abertura, silêncio. O juiz fala quando provocado.
+  }
+}
+
+// ─── throttle do juiz ───
+let judgeLastIntervention = 0;
+let judgeConsecutiveSkips = 0;
+let _lastJudgeText = '';
 
 async function judgeConsiderIntervention(lastMsg) {
   const now = Date.now();
-  const minInterval = 18000;
+  const minInterval = 14000;
   const msgCount = state.messages.filter(m=>m.type==='msg').length;
   const shouldByTimer = (now - judgeLastIntervention) > minInterval;
   const shouldByCount = msgCount > 0 && msgCount % 3 === 0;
   const txt = lastMsg.text.toLowerCase();
-  const isHighPriority = txt.match(/absolvição|absolver|condenar|condena|estado de necessidade|dolo|qualificadora|insignific|feminicídio|tráfico|homicídio|semi-imputab|excludente|art\.|súmula|stj|jurisprud|premeditação|emboscada|tese|nexo causal|autoria|materialidade/);
+  const isHighPriority = txt.match(/absolvição|absolver|condenar|condena|estado de necessidade|dolo|qualificadora|insignific|feminicídio|tráfico|homicídio|semi-imputab|excludente|art\.|súmula|stj|jurisprud|premeditação|emboscada|tese|nexo causal|autoria|materialidade|acidente|intenção|culpa|dolo eventual|repouso noturno|qualif/);
   if (isHighPriority && shouldByTimer) {
     judgeLastIntervention = now; judgeConsecutiveSkips = 0;
-    setTimeout(()=>judgeIntervene(lastMsg.text, 'tese'), 900);
+    setTimeout(()=>judgeIntervene(lastMsg.text, 'reacao'), 1200);
   } else if (shouldByCount && shouldByTimer) {
     judgeLastIntervention = now; judgeConsecutiveSkips = 0;
-    setTimeout(()=>judgeIntervene(lastMsg.text, 'geral'), 1100);
+    setTimeout(()=>judgeIntervene(lastMsg.text, 'progresso'), 1500);
   } else {
     judgeConsecutiveSkips++;
-    if (judgeConsecutiveSkips >= 4 && shouldByTimer) {
+    if (judgeConsecutiveSkips >= 5 && shouldByTimer) {
       judgeLastIntervention = now; judgeConsecutiveSkips = 0;
-      setTimeout(()=>judgeIntervene(lastMsg.text, 'lacuna'), 1000);
+      setTimeout(()=>judgeIntervene(lastMsg.text, 'provocacao'), 1200);
     }
   }
 }
@@ -1880,50 +1898,48 @@ function addSysMessage(text, shouldSync = true) {
 }
 
 // ═══════════════════════════════════════════════════════
-// JUDGE INTERVENE — Claude livre, inteligente, sem restrições
+// JUDGE INTERVENE — conversa natural, sem template
 // ═══════════════════════════════════════════════════════
 async function judgeIntervene(lastText, tipo) {
   const c = CASES[state.caseIdx];
-  // Passa o histórico COMPLETO do debate para o juiz analisar tudo
   const todoDebate = state.messages.filter(m=>m.type==='msg')
-    .map(m=>`[${m.role==='acusacao'?'ACUSAÇÃO':'DEFESA'} — ${m.sender}]: ${m.text}`)
-    .join('\n');
-  const recent = state.messages.slice(-8).filter(m=>m.type==='msg')
     .map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`)
     .join('\n');
+  const ultimaMsg = state.messages.filter(m=>m.type==='msg').slice(-1)[0];
 
   const typing = document.getElementById('typing-ind');
   document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
   typing.classList.add('show');
 
-  const contextoTipo = {
-    mention: `O advogado te interpelou diretamente com: "${lastText}"\n\nResponda diretamente ao ponto levantado. Seja tão extenso quanto o argumento merecer.`,
-    reply: `O Juiz havia dito: "${_lastJudgeText}"\nO advogado respondeu: "${lastText}"\n\nReaja à resposta recebida. Seja consistente com o que disse antes. Aprofunde se necessário.`,
-    tese: `Último argumento apresentado: "${lastText}"\n\nAnalise essa tese com profundidade. Questione, fundamente, aponte pontos fortes e fracos. Cite doutrina ou jurisprudência se pertinente.`,
-    lacuna: `Aponte alguma questão jurídica importante que nenhuma das partes abordou adequadamente no debate até agora. Seja específico e instigue o debate.`,
-    geral: `Analise o estado atual do debate e intervenha sobre o ponto mais relevante ou controverso. Pode questionar, provocar, ou oferecer uma perspectiva jurídica que mude o rumo da discussão.`,
+  const prompts = {
+    mention: `${ultimaMsg?.sender||'A parte'} falou diretamente com você: "${lastText}"\n\nDebate até agora:\n${todoDebate}\n\nResponda diretamente. Pode ser curto ou longo — o que o argumento merecer.`,
+    reply: `Você havia dito: "${_lastJudgeText}"\nA parte respondeu: "${lastText}"\n\nDebate:\n${todoDebate}\n\nReaja de forma natural.`,
+    reacao: `Debate completo até agora:\n${todoDebate}\n\nA última mensagem foi de ${ultimaMsg?.sender||'uma parte'}: "${lastText}"\n\nVocê achou interessante o suficiente para reagir. Reaja de forma genuína — analise, questione, concorde ou discorde. Sem formalidade.`,
+    progresso: `Debate completo:\n${todoDebate}\n\nFaça uma intervenção natural — pode ser uma pergunta difícil, uma observação sobre o que está faltando, ou sua impressão sobre os argumentos até agora.`,
+    provocacao: `Debate completo:\n${todoDebate}\n\nTem algum ponto que ninguém tocou ainda ou algo que ficou por cima. Provoque de forma inteligente.`,
   };
 
-  const userMsg = `HISTÓRICO COMPLETO DO DEBATE:\n${todoDebate || '(debate ainda não iniciado)'}\n\n---\nÚLTIMAS MENSAGENS:\n${recent}\n\n---\n${contextoTipo[tipo] || contextoTipo.geral}`;
+  const userMsg = prompts[tipo] || prompts.reacao;
 
   try {
-    const historyForCall = judgeHistory.slice(-16);
-    // Tokens livres — o juiz responde com a profundidade que quiser
-    const text = await callClaude(getJudgeSystem(c), [...historyForCall, {role:'user', content: userMsg}], 1000);
+    const historyForCall = judgeHistory.slice(-20);
+    const text = await callClaude(
+      getJudgeSystem(c),
+      [...historyForCall, { role: 'user', content: userMsg }],
+      1000
+    );
     typing.classList.remove('show');
     judgeLastIntervention = Date.now();
-    judgeHistory.push({ role:'user', content: userMsg });
+    judgeHistory.push({ role: 'user', content: userMsg });
     if (judgeHistory.length > 30) judgeHistory = judgeHistory.slice(-30);
-    addJudgeMessage(text || 'O Tribunal aguarda uma fundamentação mais sólida.');
+    if (text && text.trim()) {
+      _lastJudgeText = text.substring(0, 200);
+      addJudgeMessage(text);
+    }
   } catch(e) {
     typing.classList.remove('show');
-    const fallbacks = [
-      'Qual o fundamento legal específico para essa posição?',
-      'O nexo causal ainda não foi demonstrado de forma objetiva.',
-      'A parte contrária tem algo a acrescentar a esse ponto?'
-    ];
-    addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
-    console.error('Judge error:', e);
+    console.error('Judge intervene error:', e.message);
+    // Sem fallback robótico — se a API falhar, o juiz simplesmente não fala
   }
 }
 
