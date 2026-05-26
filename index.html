@@ -547,7 +547,7 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
       ⚖️ O <strong style="color:var(--gold2)">Juiz IA</strong> roda com Google Gemini — <strong style="color:var(--green2)">100% grátis</strong>.<br><br>
       Pegue sua chave em:<br>
       <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → Get API Key →</a><br><br>
-      A chave fica salva no seu navegador. Cada pessoa cola uma vez no próprio dispositivo.
+      Cole aqui, salva automático. Cada pessoa faz isso uma vez no próprio dispositivo.
     </div>
   </div>
 
@@ -892,32 +892,27 @@ let geminiKey = localStorage.getItem('tribunal_gemini_key') || '';
 // Histórico do Juiz para conversa contínua e inteligente
 let judgeHistory = [];
 
-// Converte histórico {role, content} para formato Gemini {role, parts:[{text}]}
+// Converte histórico {role,content} para formato Gemini {role,parts:[{text}]}
 function toGeminiHistory(messages) {
   return messages.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }]
+    parts: [{ text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content) }]
   }));
 }
 
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
   if (!geminiKey) throw new Error('Chave Gemini não configurada. Cole sua chave no lobby.');
-  // Separa última mensagem do histórico anterior
   const history = messages.slice(0, -1);
   const lastMsg = messages[messages.length - 1];
   const userText = typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
   const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [
       ...toGeminiHistory(history),
       { role: 'user', parts: [{ text: userText }] }
     ],
-    generationConfig: {
-      maxOutputTokens: maxTokens,
-      temperature: 0.85,
-      topP: 0.95,
-    }
+    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.85, topP: 0.95 }
   };
   const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await resp.json();
@@ -937,7 +932,7 @@ function onApiKeyInput() {
   if (val.startsWith('AIza') && val.length > 20) {
     localStorage.setItem('tribunal_gemini_key', val);
     box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva — Juiz IA ativo!</div>';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva como backup</div>';
   } else if (val.length > 5) {
     box.style.display = 'block';
     box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com AIza...)</div>';
@@ -1779,14 +1774,14 @@ let _lastJudgeText = '';
 // ═══════════════════════════════════════════════════════
 function getJudgeSystem(c) {
   const partes = `${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'})${state.solo?'':` e ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'})`}`;
-  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura, ex-promotor, doutor em direito penal pela USP. Conhece cada detalhe do CPB, CPP, e toda a jurisprudência do STJ e STF.
+  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura, ex-promotor, doutor em direito penal pela USP. Conhece cada detalhe do CPB, CPP e toda a jurisprudência do STJ e STF.
 
 CASO EM JULGAMENTO: ${c.titulo}
 ${c.context_juiz}
 Partes presentes: ${partes}
 
 COMO VOCÊ SE COMPORTA:
-Você conversa como uma pessoa real num chat — não como um sistema, não como um assistente, não como um robô jurídico. Você reage, tem humor, tem impaciência quando o argumento é fraco, tem entusiasmo quando é brilhante.
+Você conversa como uma pessoa real num chat — não como um sistema, não como um assistente. Você reage, tem humor, tem impaciência quando o argumento é fraco, tem entusiasmo quando é brilhante.
 
 Quando um argumento é bom: reconheça diretamente, aprofunde, instigue mais.
 Quando um argumento é ruim: discorde sem rodeios e explique exatamente onde falhou.
@@ -1795,7 +1790,7 @@ Quando o argumento é vago: corte curto e peça especificidade.
 Quando há contradição entre as partes: aponte e force o confronto.
 Quando ninguém tocou num ponto importante: traga você mesmo, sem pedir licença.
 
-Você tem memória de tudo que foi dito nesta sessão. Cruza argumentos. Percebe inconsistências. Lembra quando alguém disse X e agora diz Y.
+Você tem memória de tudo que foi dito nesta sessão. Cruza argumentos. Percebe inconsistências.
 
 ESTILO:
 - Português brasileiro natural, como você falaria com um colega inteligente no WhatsApp
@@ -1803,7 +1798,7 @@ ESTILO:
 - Sem bullets nem listas — texto corrido, como conversa real
 - Sem repetir o que foi dito antes de comentar
 - Curto quando cabe curto. Longo quando o assunto exige. Você decide.
-- Cite artigos e jurisprudência quando for orgânico — não como obrigação
+- Cite artigos e jurisprudência quando for orgânico, não como obrigação
 - Nunca explique que você é IA ou que está simulando
 - Nunca fique em cima do muro quando tem uma posição clara`;
 }
@@ -2397,7 +2392,7 @@ function appendIaMsg(type, who, text) {
   div.innerHTML = `<div class="ia-msg-who">${type==='ai'?'🤖 ASSISTENTE':'👤 '+who.toUpperCase()}</div><div>${formatted}</div>`;
   msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
 }
-
+ 
 // ═══════════════════════════════════════════════════════
 // BLOCO DE NOTAS
 // ═══════════════════════════════════════════════════════
