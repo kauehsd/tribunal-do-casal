@@ -538,15 +538,22 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
 
   <!-- API KEY -->
   <div class="lobby-card" style="max-width:480px;">
-    <div class="lc-title">// juiz ia — chave gemini (grátis)</div>
-    <div id="apikey-status-box" style="display:none;"></div>
+    <div class="lc-title">// juiz ia — chave anthropic (obrigatória)</div>
+    <div id="anthropic-status-box" style="display:none;"></div>
     <div class="apikey-row">
-      <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
+      <input class="apikey-inp" id="inp-anthropic-key" type="password" placeholder="sk-ant-..." autocomplete="off" oninput="onAnthropicKeyInput()">
     </div>
     <div class="apikey-hint">
-      ⚡ <strong style="color:var(--gold2)">Juiz IA já está ativo!</strong> Powered by Claude — sem chave necessária.<br><br>
-      Quer adicionar Google Gemini como backup? Cole sua chave abaixo (opcional):<br>
-      <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → Get API Key →</a>
+      ⚖️ O <strong style="color:var(--gold2)">Juiz IA</strong> usa a API da Anthropic (Claude). Cole sua chave abaixo:<br><br>
+      <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com → API Keys →</a><br><br>
+      A chave fica salva no seu navegador e nunca sai do dispositivo.
+    </div>
+    <div style="margin-top:14px;border-top:1px solid var(--b1);padding-top:14px;">
+      <div class="lc-title" style="margin-bottom:8px;">// google gemini (opcional — backup)</div>
+      <div id="apikey-status-box" style="display:none;"></div>
+      <div class="apikey-row">
+        <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
+      </div>
     </div>
   </div>
 
@@ -887,15 +894,18 @@ const firebaseConfig = {
 // CLAUDE API — Juiz + Assistente (sempre ativo, sem chave)
 // ═══════════════════════════════════════════════════════
 let geminiKey = localStorage.getItem('tribunal_gemini_key') || '';
+let anthropicKey = localStorage.getItem('tribunal_anthropic_key') || '';
 
 // Histórico do Juiz para conversa contínua e inteligente
 let judgeHistory = [];
 
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
+  if (!anthropicKey) throw new Error('Chave da Anthropic não configurada. Cole sua sk-ant-... no lobby.');
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'x-api-key': anthropicKey,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
@@ -916,6 +926,23 @@ async function callAI(systemPrompt, userPrompt, maxTokens=800, history=[]) {
   return await callClaude(systemPrompt, msgs, maxTokens);
 }
 
+function onAnthropicKeyInput() {
+  const val = document.getElementById('inp-anthropic-key').value.trim();
+  anthropicKey = val;
+  const box = document.getElementById('anthropic-status-box');
+  if (val.startsWith('sk-ant-') && val.length > 20) {
+    localStorage.setItem('tribunal_anthropic_key', val);
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Anthropic salva — Juiz ativo!</div>';
+  } else if (val.length > 5) {
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com sk-ant-...)</div>';
+  } else {
+    localStorage.removeItem('tribunal_anthropic_key');
+    box.style.display = 'none';
+  }
+}
+
 function onApiKeyInput() {
   const val = document.getElementById('inp-apikey').value.trim();
   geminiKey = val;
@@ -934,9 +961,17 @@ function onApiKeyInput() {
 }
 
 function initApiKeyUI() {
-  const box = document.getElementById('apikey-status-box');
-  box.style.display = 'block';
-  box.innerHTML = '<div class="apikey-status ok">⚡ Juiz IA powered by Claude — sempre ativo, sem chave</div>';
+  // Anthropic key
+  const anthBox = document.getElementById('anthropic-status-box');
+  if (anthropicKey && anthropicKey.startsWith('sk-ant-')) {
+    anthBox.style.display = 'block';
+    anthBox.innerHTML = '<div class="apikey-status ok">✓ Chave Anthropic ativa — Juiz pronto!</div>';
+    const inp = document.getElementById('inp-anthropic-key'); if (inp) inp.value = anthropicKey;
+  } else {
+    anthBox.style.display = 'block';
+    anthBox.innerHTML = '<div class="apikey-status no">⚠ Cole sua chave Anthropic para ativar o Juiz IA</div>';
+  }
+  // Gemini key (opcional)
   if (geminiKey) { const inp = document.getElementById('inp-apikey'); if (inp) inp.value = geminiKey; }
 }
 
