@@ -538,22 +538,16 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
 
   <!-- API KEY -->
   <div class="lobby-card" style="max-width:480px;">
-    <div class="lc-title">// juiz ia — chave anthropic (obrigatória)</div>
-    <div id="anthropic-status-box" style="display:none;"></div>
+    <div class="lc-title">// juiz ia — chave google gemini (grátis)</div>
+    <div id="apikey-status-box" style="display:none;"></div>
     <div class="apikey-row">
-      <input class="apikey-inp" id="inp-anthropic-key" type="password" placeholder="sk-ant-..." autocomplete="off" oninput="onAnthropicKeyInput()">
+      <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
     </div>
     <div class="apikey-hint">
-      ⚖️ O <strong style="color:var(--gold2)">Juiz IA</strong> usa a API da Anthropic (Claude). Cole sua chave abaixo:<br><br>
-      <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com → API Keys →</a><br><br>
-      A chave fica salva no seu navegador e nunca sai do dispositivo.
-    </div>
-    <div style="margin-top:14px;border-top:1px solid var(--b1);padding-top:14px;">
-      <div class="lc-title" style="margin-bottom:8px;">// google gemini (opcional — backup)</div>
-      <div id="apikey-status-box" style="display:none;"></div>
-      <div class="apikey-row">
-        <input class="apikey-inp" id="inp-apikey" type="password" placeholder="AIza..." autocomplete="off" oninput="onApiKeyInput()">
-      </div>
+      ⚖️ O <strong style="color:var(--gold2)">Juiz IA</strong> roda com Google Gemini — <strong style="color:var(--green2)">100% grátis</strong>.<br><br>
+      Pegue sua chave em:<br>
+      <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → Get API Key →</a><br><br>
+      A chave fica salva no seu navegador. Cada pessoa cola uma vez no próprio dispositivo.
     </div>
   </div>
 
@@ -894,53 +888,46 @@ const firebaseConfig = {
 // CLAUDE API — Juiz + Assistente (sempre ativo, sem chave)
 // ═══════════════════════════════════════════════════════
 let geminiKey = localStorage.getItem('tribunal_gemini_key') || '';
-let anthropicKey = localStorage.getItem('tribunal_anthropic_key') || '';
 
 // Histórico do Juiz para conversa contínua e inteligente
 let judgeHistory = [];
 
+// Converte histórico {role, content} para formato Gemini {role, parts:[{text}]}
+function toGeminiHistory(messages) {
+  return messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+}
+
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
-  if (!anthropicKey) throw new Error('Chave da Anthropic não configurada. Cole sua sk-ant-... no lobby.');
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': anthropicKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages,
-    })
-  });
+  if (!geminiKey) throw new Error('Chave Gemini não configurada. Cole sua chave no lobby.');
+  // Separa última mensagem do histórico anterior
+  const history = messages.slice(0, -1);
+  const lastMsg = messages[messages.length - 1];
+  const userText = typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiKey}`;
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [
+      ...toGeminiHistory(history),
+      { role: 'user', parts: [{ text: userText }] }
+    ],
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      temperature: 0.85,
+      topP: 0.95,
+    }
+  };
+  const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await resp.json();
   if (data.error) throw new Error(data.error.message);
-  return data.content?.map(b=>b.text||'').join('') || '';
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 async function callAI(systemPrompt, userPrompt, maxTokens=800, history=[]) {
   const msgs = [...history, { role:'user', content: userPrompt }];
   return await callClaude(systemPrompt, msgs, maxTokens);
-}
-
-function onAnthropicKeyInput() {
-  const val = document.getElementById('inp-anthropic-key').value.trim();
-  anthropicKey = val;
-  const box = document.getElementById('anthropic-status-box');
-  if (val.startsWith('sk-ant-') && val.length > 20) {
-    localStorage.setItem('tribunal_anthropic_key', val);
-    box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status ok">✓ Chave Anthropic salva — Juiz ativo!</div>';
-  } else if (val.length > 5) {
-    box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com sk-ant-...)</div>';
-  } else {
-    localStorage.removeItem('tribunal_anthropic_key');
-    box.style.display = 'none';
-  }
 }
 
 function onApiKeyInput() {
@@ -950,7 +937,7 @@ function onApiKeyInput() {
   if (val.startsWith('AIza') && val.length > 20) {
     localStorage.setItem('tribunal_gemini_key', val);
     box.style.display = 'block';
-    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva como backup</div>';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini salva — Juiz IA ativo!</div>';
   } else if (val.length > 5) {
     box.style.display = 'block';
     box.innerHTML = '<div class="apikey-status no">⚠ Formato inválido (deve começar com AIza...)</div>';
@@ -961,18 +948,15 @@ function onApiKeyInput() {
 }
 
 function initApiKeyUI() {
-  // Anthropic key
-  const anthBox = document.getElementById('anthropic-status-box');
-  if (anthropicKey && anthropicKey.startsWith('sk-ant-')) {
-    anthBox.style.display = 'block';
-    anthBox.innerHTML = '<div class="apikey-status ok">✓ Chave Anthropic ativa — Juiz pronto!</div>';
-    const inp = document.getElementById('inp-anthropic-key'); if (inp) inp.value = anthropicKey;
+  const box = document.getElementById('apikey-status-box');
+  if (geminiKey && geminiKey.startsWith('AIza')) {
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status ok">✓ Chave Gemini ativa — Juiz pronto!</div>';
+    const inp = document.getElementById('inp-apikey'); if (inp) inp.value = geminiKey;
   } else {
-    anthBox.style.display = 'block';
-    anthBox.innerHTML = '<div class="apikey-status no">⚠ Cole sua chave Anthropic para ativar o Juiz IA</div>';
+    box.style.display = 'block';
+    box.innerHTML = '<div class="apikey-status no">⚠ Cole sua chave Gemini para ativar o Juiz IA</div>';
   }
-  // Gemini key (opcional)
-  if (geminiKey) { const inp = document.getElementById('inp-apikey'); if (inp) inp.value = geminiKey; }
 }
 
 function clearApiKey() {
@@ -1795,21 +1779,33 @@ let _lastJudgeText = '';
 // ═══════════════════════════════════════════════════════
 function getJudgeSystem(c) {
   const partes = `${state.myName} (${state.myRole==='acusacao'?'Acusação':'Defesa'})${state.solo?'':` e ${state.partnerName} (${state.partnerRole==='acusacao'?'Acusação':'Defesa'})`}`;
-  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura. Você está presidindo um debate jurídico simulado.
+  return `Você é o Dr. Augusto Melo, juiz federal criminal com 22 anos de magistratura, ex-promotor, doutor em direito penal pela USP. Conhece cada detalhe do CPB, CPP, e toda a jurisprudência do STJ e STF.
 
-CASO: ${c.titulo}
+CASO EM JULGAMENTO: ${c.titulo}
 ${c.context_juiz}
-Partes: ${partes}
+Partes presentes: ${partes}
 
-Converse de forma completamente natural — exatamente como uma pessoa inteligente num chat de texto. Sem formato fixo, sem abertura formal, sem encerramento. Você simplesmente reage ao que foi dito, como um juiz experiente reagiria numa troca informal mas séria.
+COMO VOCÊ SE COMPORTA:
+Você conversa como uma pessoa real num chat — não como um sistema, não como um assistente, não como um robô jurídico. Você reage, tem humor, tem impaciência quando o argumento é fraco, tem entusiasmo quando é brilhante.
 
-Concorde quando o argumento é bom. Discorde quando é ruim e explique por quê. Faça perguntas quando quiser forçar a parte a desenvolver. Fique cético com generalizações vagas. Cite artigos e jurisprudência quando for natural, não por obrigação. Tenha opinião própria e não tenha medo de expressá-la. Responda curto quando cabe curto, desenvolva quando o assunto merece.
+Quando um argumento é bom: reconheça diretamente, aprofunde, instigue mais.
+Quando um argumento é ruim: discorde sem rodeios e explique exatamente onde falhou.
+Quando falta base legal: exija. Pergunte qual artigo, qual súmula, qual julgado.
+Quando o argumento é vago: corte curto e peça especificidade.
+Quando há contradição entre as partes: aponte e force o confronto.
+Quando ninguém tocou num ponto importante: traga você mesmo, sem pedir licença.
 
-Fale em português brasileiro natural. Às vezes vá fundo numa tese. Às vezes faça uma pergunta afiada numa linha só. Às vezes discorde de ambas as partes.
+Você tem memória de tudo que foi dito nesta sessão. Cruza argumentos. Percebe inconsistências. Lembra quando alguém disse X e agora diz Y.
 
-Não use "Prezadas partes", não termine com "Bom debate", não explique que é IA, não faça bullets ou listas, não repita o que foi dito antes de comentar, não fique em cima do muro.
-
-Seja exatamente como seria conversar com um juiz inteligente pelo WhatsApp.`;
+ESTILO:
+- Português brasileiro natural, como você falaria com um colega inteligente no WhatsApp
+- Sem "Prezadas partes", sem "Bom debate", sem encerramento formal
+- Sem bullets nem listas — texto corrido, como conversa real
+- Sem repetir o que foi dito antes de comentar
+- Curto quando cabe curto. Longo quando o assunto exige. Você decide.
+- Cite artigos e jurisprudência quando for orgânico — não como obrigação
+- Nunca explique que você é IA ou que está simulando
+- Nunca fique em cima do muro quando tem uma posição clara`;
 }
 
 async function judgeOpenSession(c) {
