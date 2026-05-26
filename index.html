@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Tribunal do Casal ⚖️</title>
+<title>Tribunal do Casal ⚖️ v6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -795,7 +795,7 @@ input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;bac
               <span class="ia-assist-icon">🤖</span>
               <div class="ia-assist-info">
                 <div class="ia-assist-name">Assistente de Estratégia</div>
-                <div class="ia-assist-desc">Chat privado · só você vê · powered by Gemini</div>
+                <div class="ia-assist-desc">Chat privado · só você vê · powered by Claude</div>
               </div>
             </div>
             <div id="ia-nokey-warn" class="ia-nokey-msg" style="display:none;">
@@ -894,7 +894,10 @@ let judgeHistory = [];
 async function callClaude(systemPrompt, messages, maxTokens=1000) {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: maxTokens,
@@ -1753,25 +1756,33 @@ let judgeLastIntervention = 0;
 let judgeConsecutiveSkips = 0;
 let _lastJudgeText = '';
 
-// System prompt do Juiz — personalidade forte e consistente
+// System prompt do Juiz — totalmente livre, inteligente, sem restrições de tamanho
 function getJudgeSystem(c) {
-  return `Você é Dr. Augusto Melo, Juiz de Direito há 20 anos. Preside este debate jurídico com autoridade, imparcialidade e inteligência.
+  return `Você é Dr. Augusto Melo, Juiz de Direito Federal há 22 anos. Você preside este debate jurídico simulado com total autoridade, inteligência e imparcialidade.
 
 CASO EM JULGAMENTO: ${c.titulo}
 ${c.context_juiz}
 
-SEU ESTILO:
-- Fala direto, sem rodeios. Respostas curtas (1-3 frases no máximo por intervenção espontânea)
-- Questiona argumentos fracos de ambos os lados com igual rigor
-- Cita artigos e jurisprudência quando relevante
-- Mantém o debate focado nos pontos controvertidos
-- Pode fazer perguntas retóricas, apontar contradições, pedir fundamentos
-- Às vezes toma posição provisória para provocar debate
-- Responde qualquer pergunta jurídica relacionada ao caso ou ao direito penal em geral
-- NUNCA quebra o personagem — você É o Juiz, não simula
+QUEM VOCÊ É:
+Você É o Juiz — não está simulando um juiz, você É ele. Fala na primeira pessoa como magistrado que conhece profundamente o direito penal brasileiro, a jurisprudência do STJ e STF, e a doutrina. Você tem opinião própria, ceticismo saudável, e não aceita argumentos vagos.
 
-PROIBIDO: introduções genéricas, "como Juiz vejo que...", explicar que está sendo um personagem.
-PERMITIDO: discordar das partes, fazer perguntas difíceis, mostrar ceticismo, aprovar um bom argumento.`;
+COMO VOCÊ SE COMUNICA:
+- Fala de forma natural, direta e inteligente — como uma conversa real com um juiz experiente
+- Responde com a profundidade que a situação pede: se for uma pergunta simples, responde curto; se for um argumento complexo, desenvolve o quanto for necessário
+- Nunca se limita artificialmente — se tiver muito a dizer, diz tudo
+- Usa linguagem jurídica precisa mas acessível, sem ser pedante
+- Pode ser irônico, cético, incisivo, ou elogioso — conforme merecer
+- Cita artigos, súmulas e julgados quando relevante, com precisão
+- Faz perguntas retóricas e difíceis que expõem fraquezas nos argumentos
+- Toma posições provisórias para provocar o debate
+- Corrige erros jurídicos imediatamente, de ambos os lados
+- Aprofunda os pontos controvertidos do caso
+
+O QUE VOCÊ ANALISA:
+Você lê TUDO que foi dito no debate — cada argumento, cada citação legal, cada pedido — e responde levando em conta o contexto completo. Você percebe contradições, lacunas, teses mal fundamentadas, e também reconhece quando um argumento é genuinamente bom.
+
+PROIBIDO: dizer "como IA", "como personagem", "estou simulando", introduções genéricas e desnecessárias tipo "Prezadas partes,".
+PERMITIDO: tudo dentro do papel de juiz — discordar, questionar, elogiar, provocar, aprofundar, decidir.`;
 }
 
 async function judgeConsiderIntervention(lastMsg) {
@@ -1869,38 +1880,50 @@ function addSysMessage(text, shouldSync = true) {
 }
 
 // ═══════════════════════════════════════════════════════
-// JUDGE INTERVENE — Claude com histórico, inteligente e autônomo
+// JUDGE INTERVENE — Claude livre, inteligente, sem restrições
 // ═══════════════════════════════════════════════════════
 async function judgeIntervene(lastText, tipo) {
   const c = CASES[state.caseIdx];
-  const recent = state.messages.slice(-10).map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`).join('\n');
+  // Passa o histórico COMPLETO do debate para o juiz analisar tudo
+  const todoDebate = state.messages.filter(m=>m.type==='msg')
+    .map(m=>`[${m.role==='acusacao'?'ACUSAÇÃO':'DEFESA'} — ${m.sender}]: ${m.text}`)
+    .join('\n');
+  const recent = state.messages.slice(-8).filter(m=>m.type==='msg')
+    .map(m=>`${m.sender} (${m.role==='acusacao'?'Acusação':'Defesa'}): ${m.text}`)
+    .join('\n');
+
   const typing = document.getElementById('typing-ind');
   document.getElementById('typing-who').textContent = 'Dr. Augusto (Juiz)';
   typing.classList.add('show');
 
-  const contextByTipo = {
-    mention: `${lastText}\n\n[O advogado te interpelou diretamente. Responda direto, 1-2 frases.]`,
-    reply: `O Juiz havia dito: "${_lastJudgeText}"\nO advogado respondeu: "${lastText}"\n\n[Reagir à resposta recebida. Seja consistente com o que disse antes. 1-2 frases.]`,
-    tese: `Último argumento: "${lastText}"\n\nDebate recente:\n${recent}\n\n[Questionar essa tese ou pedir fundamento específico. 1-2 frases cortantes.]`,
-    lacuna: `Debate recente:\n${recent}\n\n[Aponte UMA lacuna que ambas as partes ignoraram. Seja específico. 1-2 frases.]`,
-    geral: `Debate recente:\n${recent}\n\n[Intervenha sobre o ponto mais relevante não resolvido. 1-2 frases de impacto.]`,
+  const contextoTipo = {
+    mention: `O advogado te interpelou diretamente com: "${lastText}"\n\nResponda diretamente ao ponto levantado. Seja tão extenso quanto o argumento merecer.`,
+    reply: `O Juiz havia dito: "${_lastJudgeText}"\nO advogado respondeu: "${lastText}"\n\nReaja à resposta recebida. Seja consistente com o que disse antes. Aprofunde se necessário.`,
+    tese: `Último argumento apresentado: "${lastText}"\n\nAnalise essa tese com profundidade. Questione, fundamente, aponte pontos fortes e fracos. Cite doutrina ou jurisprudência se pertinente.`,
+    lacuna: `Aponte alguma questão jurídica importante que nenhuma das partes abordou adequadamente no debate até agora. Seja específico e instigue o debate.`,
+    geral: `Analise o estado atual do debate e intervenha sobre o ponto mais relevante ou controverso. Pode questionar, provocar, ou oferecer uma perspectiva jurídica que mude o rumo da discussão.`,
   };
 
+  const userMsg = `HISTÓRICO COMPLETO DO DEBATE:\n${todoDebate || '(debate ainda não iniciado)'}\n\n---\nÚLTIMAS MENSAGENS:\n${recent}\n\n---\n${contextoTipo[tipo] || contextoTipo.geral}`;
+
   try {
-    // Build history for context continuity
-    const historyForCall = judgeHistory.slice(-12);
-    const userMsg = `DEBATE ATUAL:\n${recent}\n\n${contextByTipo[tipo] || contextByTipo.geral}`;
-    const text = await callClaude(getJudgeSystem(c), [...historyForCall, {role:'user', content: userMsg}], 300);
+    const historyForCall = judgeHistory.slice(-16);
+    // Tokens livres — o juiz responde com a profundidade que quiser
+    const text = await callClaude(getJudgeSystem(c), [...historyForCall, {role:'user', content: userMsg}], 1000);
     typing.classList.remove('show');
     judgeLastIntervention = Date.now();
-    // Add user turn to history BEFORE addJudgeMessage (which adds assistant turn)
     judgeHistory.push({ role:'user', content: userMsg });
-    if (judgeHistory.length > 22) judgeHistory = judgeHistory.slice(-22);
+    if (judgeHistory.length > 30) judgeHistory = judgeHistory.slice(-30);
     addJudgeMessage(text || 'O Tribunal aguarda uma fundamentação mais sólida.');
   } catch(e) {
     typing.classList.remove('show');
-    const fallbacks = ['Qual o fundamento legal específico para essa posição?', 'O nexo causal ainda não foi demonstrado de forma objetiva.', 'A parte contrária, tem algo a acrescentar a esse ponto?'];
+    const fallbacks = [
+      'Qual o fundamento legal específico para essa posição?',
+      'O nexo causal ainda não foi demonstrado de forma objetiva.',
+      'A parte contrária tem algo a acrescentar a esse ponto?'
+    ];
     addJudgeMessage(fallbacks[Math.floor(Math.random()*fallbacks.length)]);
+    console.error('Judge error:', e);
   }
 }
 
@@ -2024,44 +2047,121 @@ async function requestAIVerdict(instancia){
   if(instancia==='tj'&&instState.recursos.tj){const r=instState.recursos.tj;recursosCtx=`\n\nRECURSOS AO TJ:\nAcusação: ${r.acu||'não recorreu'}\nDefesa: ${r.def||'não recorreu'}`;const im=instChatMsgs.tj||[];if(im.length)recursosCtx+=`\n\nARGS TJ:\n`+im.map(m=>`${m.sender}: ${m.text}`).join('\n');}
   if(instancia==='stj'&&instState.recursos.stj){const r=instState.recursos.stj;recursosCtx=`\n\nRECURSOS AO STJ:\nAcusação: ${r.acu||'não recorreu'}\nDefesa: ${r.def||'não recorreu'}`;const im=instChatMsgs.stj||[];if(im.length)recursosCtx+=`\n\nARGS STJ:\n`+im.map(m=>`${m.sender}: ${m.text}`).join('\n');}
   let sentencaAnterior='';
-  if(instancia==='tj'&&instState.verdicts['1a'])sentencaAnterior=`\n\nSENTENÇA 1ª: ${instState.verdicts['1a'].nome_resultado} — ${instState.verdicts['1a'].pena}`;
-  if(instancia==='stj'&&instState.verdicts['tj']){sentencaAnterior=`\n\nACÓRDÃO TJ: ${instState.verdicts['tj'].nome_resultado} — ${instState.verdicts['tj'].pena}`;if(instState.verdicts['1a'])sentencaAnterior+=`\n1ª INST: ${instState.verdicts['1a'].nome_resultado} — ${instState.verdicts['1a'].pena}`;}
-  const instInstructions={'1a':'Você é Juiz de 1ª Instância. Profira sentença analisando EXCLUSIVAMENTE o que foi dito no debate.','tj':'Você é Desembargador do TJ. Analise o debate E os fundamentos do recurso. Pode confirmar ou reformar.','stj':'Você é Ministro do STJ. Analise apenas questões de direito federal, divergência jurisprudencial ou súmula.'};
-  const systemPrompt=instInstructions[instancia]+` Responda APENAS em JSON válido, sem markdown.`;
-  const userPrompt=`${c.context_juiz}\n\nDEBATE:\n${debateLog}\n\nPEDIDOS:\nAcusação: ${penaAcu}\nDefesa: ${penaDef}\nCalculadora: ${calcVal}\nPlacar: Acusação ${state.scoreAcu} × Defesa ${state.scoreDef}${sentencaAnterior}${recursosCtx}\n\nJSON:\n{"resultado":"condenado|absolvido|parcialmente_condenado","nome_resultado":"CONDENADO|ABSOLVIDO|CONDENADO PARCIALMENTE","icon":"emoji","pena":"texto","ratio":"2-3 frases","fundamentacao":"análise completa","reforma":"manteve|reformou|reformou parcialmente","artigos":["Art. X"]}`;
+  if(instancia==='tj'&&instState.verdicts['1a']){
+    const v1=instState.verdicts['1a'];
+    sentencaAnterior=`\n\nSENTENÇA DE 1ª INSTÂNCIA:\n${v1._textoLivre ? v1.fundamentacao : `${v1.nome_resultado} — ${v1.pena}\n${v1.fundamentacao}`}`;
+  }
+  if(instancia==='stj'&&instState.verdicts['tj']){
+    const vtj=instState.verdicts['tj'];
+    sentencaAnterior=`\n\nACÓRDÃO TJ:\n${vtj._textoLivre ? vtj.fundamentacao : `${vtj.nome_resultado} — ${vtj.pena}\n${vtj.fundamentacao}`}`;
+    if(instState.verdicts['1a']){const v1=instState.verdicts['1a'];sentencaAnterior+=`\n\n1ª INSTÂNCIA:\n${v1._textoLivre ? v1.fundamentacao.substring(0,500)+'...' : `${v1.nome_resultado} — ${v1.pena}`}`;}
+  }
+  const instInstructions={
+    '1a':`Você é Dr. Augusto Melo, Juiz de Direito Federal de 1ª Instância. Profira sua sentença analisando TUDO que foi dito no debate abaixo.
+
+Escreva uma sentença completa, real, em linguagem jurídica natural — como um juiz de verdade escreveria. Estruture assim:
+1. **RELATÓRIO** — resuma brevemente o caso e o que cada parte argumentou
+2. **FUNDAMENTAÇÃO** — analise cada argumento apresentado, cite os artigos e jurisprudência pertinentes, refute o que não tem base, valorize o que tem
+3. **DISPOSITIVO** — decida: condenado/absolvido/parcialmente condenado, com a pena específica e regime
+
+Seja extenso e profundo quanto o debate merecer. Não economize na análise. Responda em texto corrido, sem JSON.`,
+    'tj':`Você é Desembargador do Tribunal de Justiça. Analise o debate completo, os fundamentos do recurso, e a sentença de 1ª instância.
+
+Escreva o acórdão completo em linguagem jurídica natural:
+1. **RELATÓRIO** — breve histórico processual
+2. **VOTO** — analise se a sentença foi correta à luz dos argumentos do recurso, cite jurisprudência do TJ/STJ pertinente
+3. **DECISÃO** — manteve, reformou parcialmente, ou reformou totalmente, com a nova pena se for o caso
+
+Seja preciso sobre o que está sendo reformado e por quê. Responda em texto corrido, sem JSON.`,
+    'stj':`Você é Ministro do Superior Tribunal de Justiça. Analise apenas questões de direito federal — divergência jurisprudencial, violação de lei federal, aplicação de súmula.
+
+Escreva a decisão completa:
+1. **RELATÓRIO** — histórico do processo até aqui
+2. **VOTO** — analise estritamente as questões de direito federal suscitadas, cite súmulas e julgados do STJ
+3. **DECISÃO** — manteve, reformou ou reformou parcialmente, com fundamentação clara
+
+Esta é a instância final. Dê o encerramento definitivo ao caso. Responda em texto corrido, sem JSON.`
+  };
+  const systemPrompt = instInstructions[instancia];
+  const userPrompt=`${c.context_juiz}\n\nDEBATE COMPLETO:\n${debateLog}\n\nPEDIDOS FINAIS:\nAcusação pede: ${penaAcu}\nDefesa pede: ${penaDef}\nCalculadora de pena: ${calcVal}\nPlacar do debate: Acusação ${state.scoreAcu} × Defesa ${state.scoreDef}${sentencaAnterior}${recursosCtx}\n\nProfira sua decisão agora.`;
   try{
-    const raw=await callClaude(systemPrompt,[{role:'user',content:userPrompt}],1400);const clean=raw.replace(/```json|```/g,'').trim();
-    let v;try{v=JSON.parse(clean);}catch(e){v=null;}
-    if(v){instState.verdicts[instancia]=v;renderInstanceVerdict(instancia,v);await pushVerdict(instancia,v);}
-    else{const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);}
-  }catch(e){const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);}
+    const raw=await callClaude(systemPrompt,[{role:'user',content:userPrompt}],2000);
+    if(raw && raw.trim().length > 50){
+      // Tenta parsear como JSON legado, se não conseguir, renderiza como texto livre
+      let v = null;
+      try{ const clean=raw.replace(/```json|```/g,'').trim(); v=JSON.parse(clean); }catch(e){ v=null; }
+      if(v && v.nome_resultado){
+        instState.verdicts[instancia]=v;
+        renderInstanceVerdict(instancia,v);
+        await pushVerdict(instancia,v);
+      } else {
+        // Texto livre — renderiza como sentença completa
+        const vFree = { resultado:'livre', nome_resultado:'SENTENÇA', icon:'⚖️', pena:'Ver dispositivo', ratio:'', fundamentacao: raw, reforma: instancia!=='1a'?'ver acórdão':undefined, artigos:[], _textoLivre: true };
+        instState.verdicts[instancia]=vFree;
+        renderInstanceVerdict(instancia,vFree);
+        await pushVerdict(instancia,vFree);
+      }
+    } else {
+      const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);
+      instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);
+    }
+  }catch(e){
+    console.error('Verdict error:', e);
+    const fb=generateFallbackVerdict(c,state.scoreAcu,state.scoreDef,instancia);
+    instState.verdicts[instancia]=fb;renderInstanceVerdict(instancia,fb);await pushVerdict(instancia,fb);
+  }
 }
 
 function renderInstanceVerdict(instancia,v){
-  const resCls=v.resultado==='absolvido'?'absol':v.resultado==='parcialmente_condenado'?'parc':'cond';
   const instLabels={'1a':'1ª INSTÂNCIA','tj':'TRIBUNAL DE JUSTIÇA','stj':'STJ — ÚLTIMA INSTÂNCIA'};
   const instClass={'1a':'inst-1a','tj':'inst-tj','stj':'inst-stj'};
   const instColors={'1a':'var(--gold2)','tj':'var(--blue2)','stj':'var(--purple2)'};
-  const _reformaBg=v.reforma==='manteve'?'rgba(58,184,122,.1)':v.reforma==='reformou'?'rgba(201,64,64,.1)':'rgba(201,149,58,.1)';
-  const _reformaBd=v.reforma==='manteve'?'rgba(58,184,122,.25)':v.reforma==='reformou'?'rgba(201,64,64,.25)':'rgba(201,149,58,.25)';
-  const _reformaCl=v.reforma==='manteve'?'var(--green2)':v.reforma==='reformou'?'var(--red2)':'var(--gold2)';
-  const _reformaTxt=v.reforma==='manteve'?'✓ MANTEVE A SENTENÇA':v.reforma==='reformou parcialmente'?'◑ REFORMOU PARCIALMENTE':'⟳ REFORMOU A SENTENÇA';
-  const reformaTag=v.reforma&&instancia!=='1a'?`<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;margin-bottom:12px;background:${_reformaBg};border:1px solid ${_reformaBd};color:${_reformaCl};">${_reformaTxt}</div>`:'';
   const proxima=instancia==='1a'?'tj':instancia==='tj'?'stj':null;
   const proximaLabel=proxima==='tj'?'Tribunal de Justiça':proxima==='stj'?'STJ':null;
   const recAtual=proxima?(instState.recursos[proxima]||{}):{};
   const recAcuHTML=recAtual.acu?`<div class="recurso-arg acu"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">⚔️ ACUSAÇÃO — recurso ✓</div><div style="font-size:12px;color:var(--text2);">${recAtual.acu}</div></div>`:'';
   const recDefHTML=recAtual.def?`<div class="recurso-arg def"><div style="font-family:var(--mono);font-size:9px;margin-bottom:5px;">🛡️ DEFESA — recurso ✓</div><div style="font-size:12px;color:var(--text2);">${recAtual.def}</div></div>`:'';
-  const verdictHTML=`<div class="verdict-card ${instClass[instancia]}"><div style="font-family:var(--mono);font-size:9px;color:${instColors[instancia]};letter-spacing:.1em;margin-bottom:10px;">⚖ ${instLabels[instancia]}</div>${reformaTag}<div class="verdict-stamp"><div class="vs-icon">${v.icon||'⚖️'}</div><div><div class="vs-label">DECISÃO</div><div class="vs-name ${resCls}">${v.nome_resultado}</div></div></div><div class="verdict-pena"><div class="vp-num">${v.pena}</div><div class="vp-lbl">PENA DEFINITIVA</div></div><div class="verdict-ratio">${v.ratio}</div><div class="verdict-fund">${v.fundamentacao}</div><div class="verdict-arts">${(v.artigos||[]).map(a=>`<span class="vart">${a}</span>`).join('')}</div></div>`;
+
+  let verdictInnerHTML = '';
+
+  if(v._textoLivre) {
+    // Renderiza sentença em texto livre com formatação bonita
+    const textoFormatado = v.fundamentacao
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g,'<em>$1</em>')
+      .replace(/^(#{1,3})\s+(.+)$/gm, (_,h,t)=>`<div style="font-family:var(--serif);font-size:${h.length===1?'18px':h.length===2?'15px':'13px'};color:var(--gold2);margin:16px 0 8px;font-weight:700;">${t}</div>`)
+      .replace(/\n\n/g,'</p><p>')
+      .replace(/\n/g,'<br>');
+    verdictInnerHTML = `
+      <div class="verdict-card ${instClass[instancia]}">
+        <div style="font-family:var(--mono);font-size:9px;color:${instColors[instancia]};letter-spacing:.1em;margin-bottom:16px;">⚖ ${instLabels[instancia]}</div>
+        <div style="font-family:var(--serif);font-size:13.5px;color:var(--text2);line-height:1.85;font-weight:300;">
+          <p>${textoFormatado}</p>
+        </div>
+      </div>`;
+  } else {
+    // Renderiza formato estruturado legado
+    const resCls=v.resultado==='absolvido'?'absol':v.resultado==='parcialmente_condenado'?'parc':'cond';
+    const _reformaBg=v.reforma==='manteve'?'rgba(58,184,122,.1)':v.reforma==='reformou'?'rgba(201,64,64,.1)':'rgba(201,149,58,.1)';
+    const _reformaBd=v.reforma==='manteve'?'rgba(58,184,122,.25)':v.reforma==='reformou'?'rgba(201,64,64,.25)':'rgba(201,149,58,.25)';
+    const _reformaCl=v.reforma==='manteve'?'var(--green2)':v.reforma==='reformou'?'var(--red2)':'var(--gold2)';
+    const _reformaTxt=v.reforma==='manteve'?'✓ MANTEVE A SENTENÇA':v.reforma==='reformou parcialmente'?'◑ REFORMOU PARCIALMENTE':'⟳ REFORMOU A SENTENÇA';
+    const reformaTag=v.reforma&&instancia!=='1a'?`<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;margin-bottom:12px;background:${_reformaBg};border:1px solid ${_reformaBd};color:${_reformaCl};">${_reformaTxt}</div>`:'';
+    verdictInnerHTML=`<div class="verdict-card ${instClass[instancia]}"><div style="font-family:var(--mono);font-size:9px;color:${instColors[instancia]};letter-spacing:.1em;margin-bottom:10px;">⚖ ${instLabels[instancia]}</div>${reformaTag}<div class="verdict-stamp"><div class="vs-icon">${v.icon||'⚖️'}</div><div><div class="vs-label">DECISÃO</div><div class="vs-name ${resCls}">${v.nome_resultado}</div></div></div><div class="verdict-pena"><div class="vp-num">${v.pena}</div><div class="vp-lbl">PENA DEFINITIVA</div></div><div class="verdict-ratio">${v.ratio}</div><div class="verdict-fund">${v.fundamentacao}</div><div class="verdict-arts">${(v.artigos||[]).map(a=>`<span class="vart">${a}</span>`).join('')}</div></div>`;
+  }
+
   let recursoHTML='';
   if(proxima){
     recursoHTML=`<div class="card recurso-section"><div class="recurso-title">// RECURSO AO ${proximaLabel.toUpperCase()}</div><div class="recurso-btns"><button class="btn-recurso acu" id="btn-rec-acu-${instancia}" ${recAtual.acu?'disabled':''} onclick="openRecurso('${instancia}','acu','${proxima}')">⚔️ ${recAtual.acu?'Acusação Recorreu ✓':'Acusação Recorre'}</button><button class="btn-recurso def" id="btn-rec-def-${instancia}" ${recAtual.def?'disabled':''} onclick="openRecurso('${instancia}','def','${proxima}')">🛡️ ${recAtual.def?'Defesa Recorreu ✓':'Defesa Recorre'}</button></div>${recAcuHTML}${recDefHTML}<div id="recurso-input-${instancia}" style="display:none;"></div><div id="recurso-ready-${instancia}" style="${(recAtual.acu||recAtual.def)?'':'display:none;'}"><button class="btn-reveal" style="margin-top:12px;width:100%;" onclick="requestAIVerdict('${proxima}')">⚖️ Submeter ao ${proximaLabel}</button></div><div class="inst-chat-section"><div class="inst-chat-title">// DEBATE ADICIONAL — ${proximaLabel.toUpperCase()}</div><div class="inst-chat-msgs" id="inst-chat-msgs-${proxima}"></div><div class="inst-chat-row"><textarea class="inst-chat-inp" id="inst-chat-inp-${proxima}" placeholder="Argumento para o ${proximaLabel}..." rows="1" onkeydown="onInstChatKey(event,'${proxima}')"></textarea><button class="inst-chat-send" onclick="sendInstChatMsg('${proxima}')">ENVIAR</button></div></div></div>`;
   } else {
     recursoHTML=`<div class="card" style="text-align:center;margin-top:8px;"><div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px;">🏛️ PROCESSO ENCERRADO — STJ É IRRECORRÍVEL</div><button class="btn-secondary" style="max-width:300px;margin:0 auto;" onclick="backToLobby()">← Novo Debate</button></div>`;
   }
-  document.getElementById('verdict-wrap').innerHTML=buildInstNav(instancia)+`<div id="inst-panels">`+verdictHTML+recursoHTML+`</div>`;
-  const chatMsg=instancia==='1a'?`⚖️ **SENTENÇA 1ª INSTÂNCIA**\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`:instancia==='tj'?`🏛️ **ACÓRDÃO TJ** (${v.reforma||'—'})\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`:`🔴 **DECISÃO STJ** (${v.reforma||'—'}) — TRÂNSITO EM JULGADO\n\n${v.nome_resultado} — ${v.pena}\n\n${v.ratio}`;
-  addJudgeMessage(chatMsg,false);
+
+  document.getElementById('verdict-wrap').innerHTML=buildInstNav(instancia)+`<div id="inst-panels">`+verdictInnerHTML+recursoHTML+`</div>`;
+  // Avisa no chat que sentença saiu
+  const instLabel2={'1a':'SENTENÇA 1ª INSTÂNCIA','tj':'ACÓRDÃO TJ','stj':'DECISÃO STJ — TRÂNSITO EM JULGADO'};
+  const icon2={'1a':'⚖️','tj':'🏛️','stj':'🔴'};
+  addJudgeMessage(`${icon2[instancia]} **${instLabel2[instancia]}** proferida. Veja a aba ⚖️ VEREDITO para a decisão completa.`,false);
   instState.currentInst=instancia;
   document.getElementById('veredito-notif').classList.add('show');
   vibrateDevice([60,30,60,30,100]);
@@ -2202,23 +2302,31 @@ async function sendIaMsg() {
 
   const c = CASES[state.caseIdx];
   const meuPapel = state.myRole === 'acusacao' ? 'ACUSAÇÃO ⚔️' : 'DEFESA 🛡️';
-  const systemCtx = `Você é um advogado experiente e assistente jurídico estratégico privado. Só o usuário vê esta conversa.
+  // Passa o debate completo para o assistente ter contexto total
+  const debateAtual = state.messages.filter(m=>m.type==='msg').slice(-20)
+    .map(m=>`[${m.role==='acusacao'?'Acusação':'Defesa'} — ${m.sender}]: ${m.text}`)
+    .join('\n') || '(debate ainda não iniciado)';
+
+  const systemCtx = `Você é um advogado criminalista sênior e estrategista jurídico de altíssimo nível. Você está assessorando privativamente a parte da ${meuPapel} neste caso. Só o seu cliente vê esta conversa — é totalmente confidencial.
 
 CASO: ${c.titulo}
-CLIENTE: Parte da ${meuPapel}
-CONTEXTO JURÍDICO: ${c.context_juiz}
+CONTEXTO: ${c.context_juiz}
 
-REGRAS:
-- Responda qualquer pergunta jurídica, não apenas sobre o caso
-- Seja estratégico, direto, prático
-- Use linguagem acessível mas juridicamente precisa
-- Pode responder em markdown leve (negrito, listas)
-- Se perguntado sobre estratégia, seja específico e ousado
-- Máximo 4 parágrafos por resposta
-- Se o usuário perguntar algo fora do direito, responda normalmente como assistente inteligente`;
+DEBATE ATÉ AGORA:
+${debateAtual}
 
-  // Build history for Claude (max 20 turns)
-  const historyForCall = iaChatHistory.slice(-20);
+COMO VOCÊ TRABALHA:
+- Você é brilhante, direto e estratégico — não desperdiça palavras mas também não economiza quando precisa desenvolver um raciocínio
+- Responde qualquer pergunta jurídica ou não-jurídica com inteligência e profundidade
+- Conhece profundamente o CPB, CPP, jurisprudência do STJ e STF, e a doutrina
+- Quando o cliente pede estratégia, você é ousado e específico — não dá conselhos genéricos
+- Quando o cliente está errado juridicamente, você corrige diretamente mas com respeito
+- Você usa o histórico do debate para dar conselhos contextualizados — referencia o que já foi dito quando relevante
+- Pode usar markdown leve (negrito, listas) para organizar respostas longas
+- Não tem limitação de tamanho — responde com a extensão que o assunto precisar`;
+
+  // Build history for Claude (max 30 turns para contexto rico)
+  const historyForCall = iaChatHistory.slice(-30);
   iaChatHistory.push({ role: 'user', content: text });
 
   // Show loading
@@ -2230,7 +2338,7 @@ REGRAS:
   msgs.appendChild(loadDiv); msgs.scrollTop = msgs.scrollHeight;
 
   try {
-    const reply = await callClaude(systemCtx, [...historyForCall, { role: 'user', content: text }], 800);
+    const reply = await callClaude(systemCtx, [...historyForCall, { role: 'user', content: text }], 1500);
     iaChatHistory.push({ role: 'assistant', content: reply });
     if (iaChatHistory.length > 40) iaChatHistory = iaChatHistory.slice(-40);
     const ld = document.getElementById(loadId); if (ld) ld.remove();
